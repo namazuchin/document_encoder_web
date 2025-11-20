@@ -5,14 +5,14 @@ import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import styles from '../components/dashboard/DashboardComponents.module.css';
 
 export const PromptManager: React.FC = () => {
-    const { presets, updatePresets } = useApp();
+    const { presets, updatePresets, t } = useApp();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<PromptPreset | null>(null);
 
     const handleCreate = () => {
         const newPreset: PromptPreset = {
             id: crypto.randomUUID(),
-            name: 'New Preset',
+            name: t.promptManager.newPreset,
             content: '',
             isDefault: false
         };
@@ -26,7 +26,7 @@ export const PromptManager: React.FC = () => {
     };
 
     const handleDelete = (id: string) => {
-        if (confirm('Are you sure you want to delete this preset?')) {
+        if (confirm(t.promptManager.deleteConfirm)) {
             updatePresets(presets.filter(p => p.id !== id));
         }
     };
@@ -51,10 +51,10 @@ export const PromptManager: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6 border border-gray-200">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Prompt Presets</h2>
+                <h2 className="text-xl font-bold text-gray-800">{t.promptManager.title}</h2>
                 {!editingId && (
                     <button onClick={handleCreate} className={`${styles.button} ${styles.primaryButton}`}>
-                        <Plus size={16} /> New Preset
+                        <Plus size={16} /> {t.promptManager.newPreset}
                     </button>
                 )}
             </div>
@@ -62,11 +62,11 @@ export const PromptManager: React.FC = () => {
             {editingId && editForm ? (
                 <div className="bg-gray-50 p-4 rounded-lg border border-blue-200 mb-6">
                     <h3 className="font-semibold mb-4 text-blue-800">
-                        {presets.find(p => p.id === editForm.id) ? 'Edit Preset' : 'New Preset'}
+                        {presets.find(p => p.id === editForm.id) ? t.promptManager.editPreset : t.promptManager.newPreset}
                     </h3>
                     <div className="space-y-4">
                         <div>
-                            <label className={styles.label}>Name</label>
+                            <label className={styles.label}>{t.promptManager.nameLabel}</label>
                             <input
                                 type="text"
                                 className={styles.input}
@@ -75,7 +75,7 @@ export const PromptManager: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className={styles.label}>Content</label>
+                            <label className={styles.label}>{t.promptManager.contentLabel}</label>
                             <textarea
                                 className={`${styles.textarea} h-48`}
                                 value={editForm.content}
@@ -84,10 +84,10 @@ export const PromptManager: React.FC = () => {
                         </div>
                         <div className="flex gap-2 justify-end">
                             <button onClick={handleCancel} className={`${styles.button} ${styles.secondaryButton}`}>
-                                <X size={16} /> Cancel
+                                <X size={16} /> {t.common.cancel}
                             </button>
                             <button onClick={handleSave} className={`${styles.button} ${styles.primaryButton}`}>
-                                <Save size={16} /> Save
+                                <Save size={16} /> {t.common.save}
                             </button>
                         </div>
                     </div>
@@ -96,7 +96,7 @@ export const PromptManager: React.FC = () => {
                 <div className="space-y-3">
                     {presets.length === 0 && (
                         <div className="text-center text-gray-500 py-8">
-                            No custom presets found. Create one to get started.
+                            {t.promptManager.noPresets}
                         </div>
                     )}
                     {presets.map(preset => (

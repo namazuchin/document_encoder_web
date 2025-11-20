@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Youtube, X } from 'lucide-react';
 import styles from './DashboardComponents.module.css';
+import { useApp } from '../../contexts/AppContext';
 
 export interface VideoSource {
     type: 'file' | 'youtube';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
+    const { t } = useApp();
     const [mode, setMode] = useState<'file' | 'youtube'>('file');
     const [ytUrl, setYtUrl] = useState('');
     const [ytTitle, setYtTitle] = useState('');
@@ -38,13 +40,13 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
                     className={`px-4 py-2 text-sm font-medium ${mode === 'file' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => setMode('file')}
                 >
-                    Local File
+                    {t.dashboard.localFileTab}
                 </button>
                 <button
                     className={`px-4 py-2 text-sm font-medium ${mode === 'youtube' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => setMode('youtube')}
                 >
-                    YouTube
+                    {t.dashboard.youtubeTab}
                 </button>
             </div>
 
@@ -61,8 +63,8 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
                             />
                             <label htmlFor="video-upload" className="cursor-pointer flex flex-col items-center gap-2">
                                 <Upload className="w-8 h-8 text-gray-400" />
-                                <span className="text-sm text-gray-600">Click to upload or drag and drop</span>
-                                <span className="text-xs text-gray-400">MP4, MOV, WebM up to 1GB</span>
+                                <span className="text-sm text-gray-600">{t.dashboard.uploadPrompt}</span>
+                                <span className="text-xs text-gray-400">{t.dashboard.uploadHint}</span>
                             </label>
                         </div>
                     ) : (
@@ -88,7 +90,7 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
             ) : (
                 <div className="space-y-3">
                     <div>
-                        <label className={styles.label}>YouTube URL</label>
+                        <label className={styles.label}>{t.dashboard.youtubeUrl}</label>
                         <input
                             type="text"
                             className={styles.input}
@@ -98,11 +100,11 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
                         />
                     </div>
                     <div>
-                        <label className={styles.label}>Video Title</label>
+                        <label className={styles.label}>{t.dashboard.videoTitle}</label>
                         <input
                             type="text"
                             className={styles.input}
-                            placeholder="Enter video title"
+                            placeholder={t.dashboard.videoTitle}
                             value={ytTitle}
                             onChange={(e) => setYtTitle(e.target.value)}
                         />
@@ -112,7 +114,7 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
                         onClick={handleYoutubeSubmit}
                         disabled={!ytUrl || !ytTitle}
                     >
-                        Set Video
+                        {t.dashboard.setVideo}
                     </button>
 
                     {value?.type === 'youtube' && (

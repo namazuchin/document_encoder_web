@@ -20,11 +20,43 @@
     - `video.ts`: `ffmpeg.wasm`を使用したフレーム抽出を管理
     - `storage.ts`: 設定の永続化のために`localStorage`をラップ
     - `archive.ts`: `JSZip`を使用してZIPファイルを生成
+- `src/i18n/`: 多言語化システム
+    - `i18n.ts`: 翻訳データと型定義（日本語・英語対応）
 - `src/components/`: UIコンポーネント
     - `dashboard/`: メインダッシュボード専用のコンポーネント（VideoSelector、PromptSettingsなど）
     - `layout/`: 共有レイアウトコンポーネント
 - `src/pages/`: トップレベルのルートコンポーネント（`Dashboard`、`Settings`）
 - `src/contexts/`: グローバル状態（`AppProvider`）
+
+## 多言語化（i18n）
+アプリケーションは日本語と英語に対応しています。
+
+### 実装の特徴
+- **軽量実装**: 外部ライブラリを使わず、カスタムi18nシステムを実装
+- **型安全**: TypeScriptで全翻訳キーが型定義され、コンパイル時にチェック
+- **即時反映**: 言語変更時、全UIコンポーネントが自動的に再レンダリング
+- **永続化**: LocalStorageに言語設定を保存し、次回起動時も維持
+
+### 使い方（開発者向け）
+```typescript
+// コンポーネント内で翻訳を使用
+import { useApp } from '../contexts/AppContext';
+
+const MyComponent = () => {
+    const { t } = useApp();
+    return <h1>{t.dashboard.title}</h1>;
+};
+```
+
+### 翻訳の追加方法
+1. `src/i18n/i18n.ts`の`Translations`インターフェースに新しいキーを追加
+2. `translations.ja`と`translations.en`に対応する翻訳を追加
+3. コンポーネントで`t.カテゴリ.キー`の形式で使用
+
+### ユーザー向け
+- Settings画面の「表示言語」ドロップダウンで言語を切り替え可能
+- デフォルト言語: 日本語
+
 
 ## 重要な制約と設定
 1.  **SharedArrayBuffer のサポート**:

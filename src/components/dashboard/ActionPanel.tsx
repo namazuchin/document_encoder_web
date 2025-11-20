@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Loader2 } from 'lucide-react';
 import styles from './DashboardComponents.module.css';
+import { useApp } from '../../contexts/AppContext';
 
 interface Props {
     onGenerate: () => void;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export const ActionPanel: React.FC<Props> = ({ onGenerate, isProcessing, disabled }) => {
+    const { t } = useApp();
     return (
         <div className="pt-4 border-t border-gray-200">
             <button
@@ -19,12 +21,12 @@ export const ActionPanel: React.FC<Props> = ({ onGenerate, isProcessing, disable
                 {isProcessing ? (
                     <>
                         <Loader2 className="animate-spin" />
-                        Processing...
+                        {t.dashboard.processing}
                     </>
                 ) : (
                     <>
                         <Play fill="currentColor" />
-                        Generate Document
+                        {t.common.generate}
                     </>
                 )}
             </button>

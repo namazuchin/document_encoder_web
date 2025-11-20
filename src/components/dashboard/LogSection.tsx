@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import type { ProcessingLog } from '../../types';
 import { Trash2 } from 'lucide-react';
+import { useApp } from '../../contexts/AppContext';
 
 interface Props {
     logs: ProcessingLog[];
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const LogSection: React.FC<Props> = ({ logs, onClear }) => {
+    const { t } = useApp();
     const endRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -17,7 +19,7 @@ export const LogSection: React.FC<Props> = ({ logs, onClear }) => {
     return (
         <div className="flex flex-col h-64 border border-gray-200 rounded-lg overflow-hidden bg-gray-900 text-gray-100 font-mono text-xs">
             <div className="flex items-center justify-between px-3 py-2 bg-gray-800 border-b border-gray-700">
-                <span className="font-semibold text-gray-300">Processing Logs</span>
+                <span className="font-semibold text-gray-300">{t.dashboard.logsTitle}</span>
                 <button onClick={onClear} className="text-gray-400 hover:text-white">
                     <Trash2 size={14} />
                 </button>
