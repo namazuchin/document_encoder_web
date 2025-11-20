@@ -54,6 +54,7 @@ export class VideoProcessor {
                 '-ss', time.toString(),
                 '-i', inputName,
                 '-frames:v', '1',
+                '-q:v', '2',  // 品質設定 (1-31, 2は高品質)
                 outputName
             ]);
 
