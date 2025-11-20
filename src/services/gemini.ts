@@ -95,15 +95,19 @@ export class GeminiClient {
   async generateContent(
     model: string,
     prompt: string,
-    fileUri?: string
+    fileUri?: string,
+    screenshotInstruction?: string
   ): Promise<string> {
     const url = `${this.baseUrl}/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
+
+    // スクリーンショット指示がある場合はプロンプトの末尾に追加
+    const finalPrompt = screenshotInstruction ? `${prompt}${screenshotInstruction}` : prompt;
 
     const contents = [
       {
         parts: [
           ...(fileUri ? [{ file_data: { mime_type: "video/mp4", file_uri: fileUri } }] : []),
-          { text: prompt }
+          { text: finalPrompt }
         ]
       }
     ];

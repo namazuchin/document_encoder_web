@@ -10,6 +10,7 @@ import { useApp } from '../contexts/AppContext';
 import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
+import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction } from '../services/screenshot';
 
 export const Dashboard: React.FC = () => {
     const { settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, progress, setProgress, statusMessage, setStatusMessage } = useApp();
@@ -43,41 +44,16 @@ export const Dashboard: React.FC = () => {
             const gemini = new GeminiClient(settings.apiKey);
             let fileUri = '';
 
-            // 1. Process Video
+            // 1. Process Video (Upload only, no screenshot extraction yet)
             if (videoSource.type === 'file' && videoSource.file) {
                 setStatusMessage("Processing local video...");
                 addLog(`Selected file: ${videoSource.file.name} (${(videoSource.file.size / 1024 / 1024).toFixed(2)} MB)`);
-
-                // Extract Screenshots
-                if (promptConfig.extractScreenshots) {
-                    setStatusMessage("Extracting screenshots...");
-                    addLog("Initializing ffmpeg.wasm...");
-
-                    const duration = await videoProcessor.current.getVideoDuration(videoSource.file);
-                    addLog(`Video duration: ${duration.toFixed(2)}s`);
-
-                    // Determine timestamps based on frequency
-                    const interval = promptConfig.screenshotFrequency === 'detailed' ? 10 : promptConfig.screenshotFrequency === 'moderate' ? 30 : 60;
-                    const timestamps: number[] = [];
-                    for (let t = interval; t < duration; t += interval) {
-                        timestamps.push(t);
-                    }
-
-                    addLog(`Extracting ${timestamps.length} frames...`);
-                    const blobs = await videoProcessor.current.extractFrames(videoSource.file, timestamps, (pct) => {
-                        setProgress(pct * 0.3); // First 30%
-                    });
-
-                    const images = blobs.map((b, i) => ({ blob: b, name: `screenshot_${timestamps[i]}s.png` }));
-                    setExtractedImages(images);
-                    addLog(`Extracted ${images.length} images.`, "success");
-                }
 
                 // Upload to Gemini
                 setStatusMessage("Uploading video to Gemini...");
                 addLog("Starting upload...");
                 fileUri = await gemini.uploadFile(videoSource.file, "video/mp4", (prog) => {
-                    const pct = 30 + (prog.loaded / prog.total) * 40; // Next 40% (30-70%)
+                    const pct = (prog.loaded / prog.total) * 50; // First 50%
                     setProgress(pct);
                 });
                 addLog(`Upload complete. URI: ${fileUri}`, "success");
@@ -85,26 +61,68 @@ export const Dashboard: React.FC = () => {
             } else if (videoSource.type === 'youtube' && videoSource.youtubeUrl) {
                 setStatusMessage("Processing YouTube video...");
                 addLog(`YouTube URL: ${videoSource.youtubeUrl}`);
-                // Note: Real YouTube integration might require different handling.
-                // For now, we assume we can't easily get frames from YouTube in browser without CORS issues,
-                // so we skip frame extraction or rely on Gemini's ability if we had a way to pass it.
-                // But Gemini API uploadFile doesn't take URL.
-                // We will rely on the prompt to ask Gemini to watch it if possible, OR fail if not supported.
-                // The spec says "Gemini API YouTube integration".
-                // We'll try to pass the URL in the prompt as a fallback if fileUri is empty.
                 addLog("YouTube mode: Skipping local processing and upload. Passing URL to model.");
             }
 
-            // 2. Generate Document
+            // 2. Generate Document with screenshot instruction
             setStatusMessage("Generating document...");
-            setProgress(70);
+            setProgress(50);
             addLog(`Sending request to ${settings.model}...`);
 
             const finalPrompt = `${promptConfig.prompt}\n\nTarget Video: ${videoSource.type === 'youtube' ? videoSource.youtubeUrl : '(Attached Video)'}\nLanguage: ${promptConfig.language === 'ja' ? 'Japanese' : 'English'}`;
 
-            const text = await gemini.generateContent(settings.model, finalPrompt, fileUri);
-            setResultMarkdown(text);
+            // スクリーンショット指示を生成
+            const screenshotInstruction = promptConfig.extractScreenshots
+                ? buildScreenshotPromptInstruction(promptConfig.screenshotFrequency)
+                : undefined;
+
+            const text = await gemini.generateContent(settings.model, finalPrompt, fileUri, screenshotInstruction);
+            setProgress(70);
             addLog("Generation complete!", "success");
+
+            // 3. Extract screenshots based on placeholders (if enabled and file source)
+            let finalMarkdown = text;
+            let images: { blob: Blob; name: string }[] = [];
+
+            if (promptConfig.extractScreenshots && videoSource.type === 'file' && videoSource.file) {
+                setStatusMessage("Extracting screenshots from placeholders...");
+                addLog("Analyzing screenshot placeholders...");
+
+                const placeholders = parseScreenshotPlaceholders(text);
+
+                if (placeholders.length > 0) {
+                    addLog(`Found ${placeholders.length} screenshot placeholders.`);
+
+                    // タイムスタンプを抽出
+                    const timestamps = placeholders.map(p => p.seconds);
+
+                    // フレーム抽出
+                    addLog(`Extracting ${timestamps.length} frames...`);
+                    const blobs = await videoProcessor.current.extractFrames(videoSource.file, timestamps, (pct) => {
+                        setProgress(70 + pct * 0.2); // 70-90%
+                    });
+
+                    // 画像情報を準備
+                    images = blobs.map((blob, i) => ({
+                        blob,
+                        name: `image-${i + 1}.png`
+                    }));
+
+                    const imageMapping = timestamps.map((timestamp, i) => ({
+                        seconds: timestamp,
+                        filename: `image-${i + 1}.png`
+                    }));
+
+                    // Markdownを置換
+                    finalMarkdown = replaceScreenshotsInMarkdown(text, imageMapping);
+                    addLog(`Extracted ${images.length} images and updated markdown.`, "success");
+                } else {
+                    addLog("No screenshot placeholders found in the generated document.");
+                }
+            }
+
+            setResultMarkdown(finalMarkdown);
+            setExtractedImages(images);
             setProgress(100);
             setStatusMessage("Done");
 
