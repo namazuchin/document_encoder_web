@@ -85,6 +85,25 @@ export function replaceScreenshotsInMarkdown(
 }
 
 /**
+ * 秒数をhhmmssff形式のファイル名に変換
+ * @param seconds 秒数（浮動小数点）
+ * @param fps フレームレート（デフォルト: 30）
+ * @returns hhmmssff形式の文字列（例: "00123405"）
+ */
+export function formatTimestampToFilename(seconds: number, fps: number = 30): string {
+    const totalSeconds = Math.floor(seconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    
+    // 小数部分からフレーム番号を計算
+    const fractionalPart = seconds - totalSeconds;
+    const frame = Math.floor(fractionalPart * fps) % fps;
+    
+    return `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}${secs.toString().padStart(2, '0')}${frame.toString().padStart(2, '0')}`;
+}
+
+/**
  * スクリーンショット頻度に基づいたプロンプト指示文を生成
  * @param frequency スクリーンショット頻度 ('minimal' | 'moderate' | 'detailed')
  * @returns Geminiに追加するプロンプト指示文

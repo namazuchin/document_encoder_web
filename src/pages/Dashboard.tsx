@@ -10,7 +10,7 @@ import { useApp } from '../contexts/AppContext';
 import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
-import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction } from '../services/screenshot';
+import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, formatTimestampToFilename } from '../services/screenshot';
 
 export const Dashboard: React.FC = () => {
     const { settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, progress, setProgress, statusMessage, setStatusMessage, t } = useApp();
@@ -102,15 +102,15 @@ export const Dashboard: React.FC = () => {
                         setProgress(70 + pct * 0.2); // 70-90%
                     });
 
-                    // 画像情報を準備
+                    // 画像情報を準備（hhmmssff形式のファイル名）
                     images = blobs.map((blob, i) => ({
                         blob,
-                        name: `image-${i + 1}.png`
+                        name: `${formatTimestampToFilename(timestamps[i])}.jpg`
                     }));
 
-                    const imageMapping = timestamps.map((timestamp, i) => ({
+                    const imageMapping = timestamps.map((timestamp) => ({
                         seconds: timestamp,
-                        filename: `image-${i + 1}.png`
+                        filename: `${formatTimestampToFilename(timestamp)}.jpg`
                     }));
 
                     // Markdownを置換
