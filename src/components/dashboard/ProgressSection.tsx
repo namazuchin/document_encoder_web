@@ -1,4 +1,5 @@
 import React from 'react';
+import { useApp } from '../../contexts/AppContext';
 
 
 interface Props {
@@ -7,10 +8,12 @@ interface Props {
 }
 
 export const ProgressSection: React.FC<Props> = ({ progress, statusMessage }) => {
+    const { t } = useApp();
+
     return (
         <div className="space-y-2">
             <div className="flex justify-between text-sm font-medium text-gray-700">
-                <span>{statusMessage || "Ready"}</span>
+                <span>{statusMessage || t.messages.done}</span>
                 <span>{Math.round(progress)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">

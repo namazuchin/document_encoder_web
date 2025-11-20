@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { type AppSettings, type ProcessingLog, type PromptPreset } from '../types';
 import { StorageService } from '../services/storage';
+import { useTranslation as getTranslation, type Language, type Translations } from '../i18n/i18n';
 
 interface AppContextType {
     settings: AppSettings;
@@ -16,6 +17,8 @@ interface AppContextType {
     setStatusMessage: (msg: string) => void;
     presets: PromptPreset[];
     updatePresets: (presets: PromptPreset[]) => void;
+    language: Language;
+    t: Translations;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,9 +30,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState("");
     const [presets, setPresets] = useState<PromptPreset[]>(StorageService.getPresets());
+    const [language, setLanguage] = useState<Language>(settings.language);
+    const t = getTranslation(language);
 
     const updateSettings = (newSettings: AppSettings) => {
         setSettings(newSettings);
+        setLanguage(newSettings.language);
         StorageService.saveSettings(newSettings);
     };
 
@@ -58,7 +64,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             statusMessage,
             setStatusMessage,
             presets,
-            updatePresets
+            updatePresets,
+            language,
+            t
         }}>
             {children}
         </AppContext.Provider>

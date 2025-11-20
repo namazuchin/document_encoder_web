@@ -13,7 +13,7 @@ import { ArchiveService } from '../services/archive';
 import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction } from '../services/screenshot';
 
 export const Dashboard: React.FC = () => {
-    const { settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, progress, setProgress, statusMessage, setStatusMessage } = useApp();
+    const { settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, progress, setProgress, statusMessage, setStatusMessage, t } = useApp();
 
     const [videoSource, setVideoSource] = useState<VideoSource | null>(null);
     const [promptConfig, setPromptConfig] = useState<PromptConfig>({
@@ -30,7 +30,7 @@ export const Dashboard: React.FC = () => {
     const handleGenerate = async () => {
         if (!videoSource) return;
         if (!settings.apiKey) {
-            addLog("API Key is missing. Please go to Settings.", "error");
+            addLog(t.messages.apiKeyMissing, "error");
             return;
         }
 
@@ -56,7 +56,7 @@ export const Dashboard: React.FC = () => {
                     const pct = (prog.loaded / prog.total) * 50; // First 50%
                     setProgress(pct);
                 });
-                addLog(`Upload complete. URI: ${fileUri}`, "success");
+                addLog(`${t.messages.uploadComplete}. URI: ${fileUri}`, "success");
 
             } else if (videoSource.type === 'youtube' && videoSource.youtubeUrl) {
                 setStatusMessage("Processing YouTube video...");
@@ -78,7 +78,7 @@ export const Dashboard: React.FC = () => {
 
             const text = await gemini.generateContent(settings.model, finalPrompt, fileUri, screenshotInstruction);
             setProgress(70);
-            addLog("Generation complete!", "success");
+            addLog(t.messages.generationComplete, "success");
 
             // 3. Extract screenshots based on placeholders (if enabled and file source)
             let finalMarkdown = text;
@@ -115,21 +115,21 @@ export const Dashboard: React.FC = () => {
 
                     // Markdownを置換
                     finalMarkdown = replaceScreenshotsInMarkdown(text, imageMapping);
-                    addLog(`Extracted ${images.length} images and updated markdown.`, "success");
+                    addLog(`${t.messages.extractionComplete} (${images.length})`, "success");
                 } else {
-                    addLog("No screenshot placeholders found in the generated document.");
+                    addLog(t.messages.noPlaceholders);
                 }
             }
 
             setResultMarkdown(finalMarkdown);
             setExtractedImages(images);
             setProgress(100);
-            setStatusMessage("Done");
+            setStatusMessage(t.messages.done);
 
         } catch (error: any) {
             console.error(error);
             addLog(error.message || "Unknown error occurred", "error");
-            setStatusMessage("Failed");
+            setStatusMessage(t.messages.failed);
         } finally {
             setIsProcessing(false);
         }
@@ -152,12 +152,12 @@ export const Dashboard: React.FC = () => {
         <div className={styles.container}>
             <div className={styles.leftPane}>
                 <div className={styles.card}>
-                    <h2 className={styles.cardHeader}>1. Video Source</h2>
+                    <h2 className={styles.cardHeader}>{t.dashboard.videoSourceTitle}</h2>
                     <VideoSourceSelector value={videoSource} onChange={setVideoSource} />
                 </div>
 
                 <div className={styles.card}>
-                    <h2 className={styles.cardHeader}>2. Prompt Settings</h2>
+                    <h2 className={styles.cardHeader}>{t.dashboard.promptSettingsTitle}</h2>
                     <PromptSettings
                         config={promptConfig}
                         onChange={setPromptConfig}
@@ -174,7 +174,7 @@ export const Dashboard: React.FC = () => {
 
             <div className={styles.rightPane}>
                 <div className={styles.card}>
-                    <h2 className={styles.cardHeader}>Status</h2>
+                    <h2 className={styles.cardHeader}>{t.dashboard.statusTitle}</h2>
                     <ProgressSection progress={progress} statusMessage={statusMessage} />
                 </div>
 
