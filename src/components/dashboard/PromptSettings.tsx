@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useApp } from '../../contexts/AppContext';
 import styles from './DashboardComponents.module.css';
 
 export interface PromptConfig {
@@ -18,6 +19,7 @@ const DEFAULT_PROMPT = `動画の内容を詳細に解説するドキュメン�
 重要なポイント、手順、概念を明確に記述し、必要に応じて箇条書きや表を使用してください。`;
 
 export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube }) => {
+    const { presets } = useApp();
 
     useEffect(() => {
         if (!config.prompt) {
@@ -25,8 +27,31 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
         }
     }, []);
 
+    const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const presetId = e.target.value;
+        if (!presetId) return;
+
+        const preset = presets.find(p => p.id === presetId);
+        if (preset) {
+            onChange({ ...config, prompt: preset.content });
+        } else if (presetId === 'default') {
+            onChange({ ...config, prompt: DEFAULT_PROMPT });
+        }
+    };
+
     return (
         <div className="space-y-4">
+            <div>
+                <label className={styles.label}>Preset</label>
+                <select className={styles.select} onChange={handlePresetChange} defaultValue="">
+                    <option value="" disabled>Select a preset...</option>
+                    <option value="default">Default (Manual)</option>
+                    {presets.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                </select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className={styles.label}>Language</label>

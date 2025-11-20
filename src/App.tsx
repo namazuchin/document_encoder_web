@@ -3,6 +3,7 @@ import { AppProvider } from './contexts/AppContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Settings } from './pages/Settings';
+import { PromptManager } from './pages/PromptManager';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="prompts" element={<PromptManager />} />
           </Route>
         </Routes>
       </BrowserRouter>
