@@ -50,7 +50,6 @@ export class GeminiClient {
       xhr.setRequestHeader("X-Goog-Upload-Protocol", "resumable");
       xhr.setRequestHeader("X-Goog-Upload-Command", "upload, finalize");
       xhr.setRequestHeader("X-Goog-Upload-Offset", "0");
-      xhr.setRequestHeader("Content-Length", file.size.toString());
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable && onProgress) {
