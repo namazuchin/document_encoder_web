@@ -31,7 +31,7 @@ export class GeminiClient {
     const initResponse = await fetch(initUrl, {
       method: "POST",
       headers: initHeaders,
-      body: JSON.stringify({ display_name: file.name }),
+      body: JSON.stringify({ file: { display_name: file.name } }),
     });
 
     if (!initResponse.ok) {
