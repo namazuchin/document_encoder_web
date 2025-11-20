@@ -1,4 +1,4 @@
-import { type AppSettings, GEMINI_MODELS } from '../types';
+import { type AppSettings, type PromptPreset, GEMINI_MODELS } from '../types';
 
 const STORAGE_KEY = 'doc_encoder_settings';
 
@@ -26,5 +26,19 @@ export const StorageService = {
 
     clearSettings() {
         localStorage.removeItem(STORAGE_KEY);
+    },
+
+    getPresets(): PromptPreset[] {
+        const stored = localStorage.getItem(STORAGE_KEY + '_presets');
+        if (!stored) return [];
+        try {
+            return JSON.parse(stored);
+        } catch {
+            return [];
+        }
+    },
+
+    savePresets(presets: PromptPreset[]) {
+        localStorage.setItem(STORAGE_KEY + '_presets', JSON.stringify(presets));
     }
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Settings, FileText } from 'lucide-react';
+import { Settings, FileText, List } from 'lucide-react';
 import styles from './AppLayout.module.css';
 
 export const AppLayout: React.FC = () => {
@@ -12,6 +12,9 @@ export const AppLayout: React.FC = () => {
                     <h1 className={styles.title}>Document Encoder Web</h1>
                 </Link>
                 <nav className={styles.nav}>
+                    <Link to="/prompts" className={styles.navItem} title="Prompt Presets">
+                        <List size={20} />
+                    </Link>
                     <Link to="/settings" className={styles.navItem} title="Settings">
                         <Settings size={20} />
                     </Link>

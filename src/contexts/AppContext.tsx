@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
-import type { AppSettings, ProcessingLog } from '../types';
+import { type AppSettings, type ProcessingLog, type PromptPreset } from '../types';
 import { StorageService } from '../services/storage';
 
 interface AppContextType {
@@ -14,6 +14,8 @@ interface AppContextType {
     setProgress: (progress: number) => void;
     statusMessage: string;
     setStatusMessage: (msg: string) => void;
+    presets: PromptPreset[];
+    updatePresets: (presets: PromptPreset[]) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -24,10 +26,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState("");
+    const [presets, setPresets] = useState<PromptPreset[]>(StorageService.getPresets());
 
     const updateSettings = (newSettings: AppSettings) => {
         setSettings(newSettings);
         StorageService.saveSettings(newSettings);
+    };
+
+    const updatePresets = (newPresets: PromptPreset[]) => {
+        setPresets(newPresets);
+        StorageService.savePresets(newPresets);
     };
 
     const addLog = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
@@ -48,7 +56,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             progress,
             setProgress,
             statusMessage,
-            setStatusMessage
+            setStatusMessage,
+            presets,
+            updatePresets
         }}>
             {children}
         </AppContext.Provider>
