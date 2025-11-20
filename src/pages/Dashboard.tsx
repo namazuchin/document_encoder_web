@@ -137,11 +137,29 @@ export const Dashboard: React.FC = () => {
 
     const handleDownload = async () => {
         if (!resultMarkdown) return;
+        
+        // 動画名を取得してzipファイル名に使用
+        let zipFileName = "document_package.zip";
+        if (videoSource) {
+            if (videoSource.type === 'file' && videoSource.file) {
+                // ファイル名から拡張子を除去
+                const fileName = videoSource.file.name;
+                const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+                zipFileName = `${nameWithoutExt}.zip`;
+            } else if (videoSource.type === 'youtube' && videoSource.youtubeTitle) {
+                // YouTubeタイトルを使用（ファイル名に使えない文字を置換）
+                const sanitizedTitle = videoSource.youtubeTitle
+                    .replace(/[/\\:*?"<>|]/g, '_')
+                    .trim();
+                zipFileName = `${sanitizedTitle}.zip`;
+            }
+        }
+        
         const zipBlob = await ArchiveService.createZip(resultMarkdown, extractedImages);
         const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "document_package.zip";
+        a.download = zipFileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
