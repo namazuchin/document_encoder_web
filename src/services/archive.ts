@@ -18,6 +18,9 @@ export const ArchiveService = {
             });
         }
 
-        return await zip.generateAsync({ type: "blob" });
+        return await zip.generateAsync({
+            type: "blob",
+            mimeType: "application/zip"
+        });
     }
 };
