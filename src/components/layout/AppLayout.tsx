@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
-import { Settings, FileText, List, ChevronDown } from 'lucide-react';
-import { Box, Flex, Heading, HStack, Icon, IconButton, Badge, Menu, Button } from '@chakra-ui/react';
+import { Settings, List, ChevronDown } from 'lucide-react';
+import { Box, Flex, Heading, HStack, Icon, IconButton, Badge, Menu, Button, Image } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
 import { GEMINI_MODELS } from '../../types';
 
@@ -29,7 +29,7 @@ export const AppLayout: React.FC = () => {
                 {/* @ts-ignore */}
                 <Box as={RouterLink} to="/" _hover={{ textDecoration: 'none' }}>
                     <Flex align="center" gap={2}>
-                        <Icon as={FileText} color="blue.500" boxSize={6} />
+                        <Image src="/favicon.svg" boxSize={8} alt="Logo" />
                         <Heading as="h1" size="md" color="gray.800">
                             {t.layout.appTitle}
                         </Heading>
@@ -44,10 +44,12 @@ export const AppLayout: React.FC = () => {
                                 px={2}
                                 borderRadius="full"
                             >
-                                <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full" fontSize="xs">
-                                    {currentModelName}
-                                </Badge>
-                                <Icon as={ChevronDown} ml={2} />
+                                <HStack gap={2}>
+                                    <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full" fontSize="xs">
+                                        {currentModelName}
+                                    </Badge>
+                                    <Icon as={ChevronDown} />
+                                </HStack>
                             </Button>
                         </Menu.Trigger>
                         <Menu.Positioner>
