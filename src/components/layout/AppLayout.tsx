@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
-import { Settings, FileText, List, ChevronDown } from 'lucide-react';
+import { Settings, List, ChevronDown } from 'lucide-react';
 import { Box, Flex, Heading, HStack, Icon, IconButton, Badge, Menu, Button, Image } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
 import { GEMINI_MODELS } from '../../types';
