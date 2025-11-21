@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GEMINI_MODELS } from '../types';
 import { Box, Heading, VStack, Text, Input, NativeSelect, Button, HStack } from '@chakra-ui/react';
+import { Download, Upload } from 'lucide-react';
+import { StorageService } from '../services/storage';
 
 export const Settings: React.FC = () => {
-    const { settings, updateSettings, t } = useApp();
+    const { settings, updateSettings, t, updatePresets, language, addLog } = useApp();
     const [tempSettings, setTempSettings] = useState(settings);
     const [hasChanges, setHasChanges] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFieldChange = (newSettings: typeof tempSettings) => {
         setTempSettings(newSettings);
@@ -21,6 +24,54 @@ export const Settings: React.FC = () => {
     const handleReset = () => {
         setTempSettings(settings);
         setHasChanges(false);
+    };
+
+    const handleExport = () => {
+        const configJson = StorageService.exportConfiguration();
+        const blob = new Blob([configJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document_encoder_config.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addLog(t.settings.exportConfig, 'success');
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleImportFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target?.result as string;
+            const result = StorageService.importConfiguration(content);
+
+            if (result.success) {
+                // Reload settings and presets from storage
+                const newSettings = StorageService.getSettings();
+                const newPresets = StorageService.getPresets();
+                setTempSettings(newSettings);
+                updateSettings(newSettings);
+                updatePresets(newPresets);
+                setHasChanges(false);
+
+                addLog(t.settings.importSuccess, 'success');
+            } else {
+                addLog(`${t.settings.importError}: ${result.message || ''}`, 'error');
+            }
+        };
+        reader.readAsText(file);
+
+        // Reset file input
+        event.target.value = '';
     };
 
     return (
@@ -106,6 +157,32 @@ export const Settings: React.FC = () => {
                         {t.common.unsavedChanges}
                     </Text>
                 )}
+
+                <Box borderTopWidth="1px" borderColor="gray.200" pt={6}>
+                    <Text mb={4} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.configManagement}</Text>
+                    <HStack gap={3}>
+                        <Button onClick={handleExport} variant="outline" colorScheme="blue">
+                            <Download size={16} />
+                            <Box as="span" ml={2}>{t.settings.exportConfig}</Box>
+                        </Button>
+                        <Button onClick={handleImportClick} variant="outline" colorScheme="green">
+                            <Upload size={16} />
+                            <Box as="span" ml={2}>{t.settings.importConfig}</Box>
+                        </Button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="application/json"
+                            onChange={handleImportFile}
+                            style={{ display: 'none' }}
+                        />
+                    </HStack>
+                    <Text fontSize="xs" color="gray.500" mt={2}>
+                        {language === 'ja'
+                            ? 'エクスポートにはAPIキーは含まれません。インポート時は既存のAPIキーが保持されます。'
+                            : 'Export does not include API key. Existing API key will be preserved on import.'}
+                    </Text>
+                </Box>
             </VStack>
         </Box>
     );
