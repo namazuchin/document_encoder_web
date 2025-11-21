@@ -169,8 +169,8 @@ export const Dashboard: React.FC = () => {
     };
 
     return (
-        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} h={{ lg: "calc(100vh - 100px)" }}>
-            <VStack gap={6} overflowY="auto" p={1} align="stretch" className="column-scroll-hidden">
+        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
+            <VStack gap={6} p={1} align="stretch">
                 <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
                     <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
                     <VideoSourceSelector value={videoSource} onChange={setVideoSource} />
@@ -206,7 +206,7 @@ export const Dashboard: React.FC = () => {
                 />
             </VStack>
 
-            <VStack gap={6} overflowY="auto" p={1} align="stretch" className="column-scroll-hidden">
+            <VStack gap={6} p={1} align="stretch">
                 <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
                     <Heading size="md" mb={4}>{t.dashboard.statusTitle}</Heading>
                     <ProgressSection progress={progress} statusMessage={statusMessage} />
