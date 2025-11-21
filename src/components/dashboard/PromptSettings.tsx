@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
-import styles from './DashboardComponents.module.css';
+import { VStack, Box, Text, NativeSelect, Grid, HStack, Switch, Textarea } from '@chakra-ui/react';
 
 export interface PromptConfig {
     prompt: string;
@@ -44,72 +44,82 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
     };
 
     return (
-        <div className="space-y-4">
-            <div>
-                <label className={styles.label}>{t.dashboard.preset}</label>
-                <select className={styles.select} onChange={handlePresetChange} defaultValue="">
-                    <option value="" disabled>{t.dashboard.selectPreset}</option>
-                    <option value="default">{t.dashboard.defaultPreset}</option>
-                    {presets.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                </select>
-            </div>
+        <VStack gap={4} align="stretch">
+            <Box>
+                <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.preset}</Text>
+                <NativeSelect.Root>
+                    <NativeSelect.Field onChange={handlePresetChange} defaultValue="">
+                        <option value="" disabled>{t.dashboard.selectPreset}</option>
+                        <option value="default">{t.dashboard.defaultPreset}</option>
+                        {presets.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                </NativeSelect.Root>
+            </Box>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className={styles.label}>{t.dashboard.language}</label>
-                    <select
-                        className={styles.select}
-                        value={config.language}
-                        onChange={(e) => onChange({ ...config, language: e.target.value as 'ja' | 'en' })}
-                    >
-                        <option value="ja">{t.dashboard.japanese}</option>
-                        <option value="en">{t.dashboard.english}</option>
-                    </select>
-                </div>
+            <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                <Box>
+                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.language}</Text>
+                    <NativeSelect.Root>
+                        <NativeSelect.Field
+                            value={config.language}
+                            onChange={(e) => onChange({ ...config, language: e.currentTarget.value as 'ja' | 'en' })}
+                        >
+                            <option value="ja">{t.dashboard.japanese}</option>
+                            <option value="en">{t.dashboard.english}</option>
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                </Box>
 
                 {!isYoutube && (
-                    <div>
-                        <label className={styles.label}>{t.dashboard.screenshots}</label>
-                        <div className="flex items-center gap-2 mt-2">
-                            <input
-                                type="checkbox"
-                                id="extract-screens"
+                    <Box>
+                        <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.screenshots}</Text>
+                        <HStack gap={2} mt={2}>
+                            <Switch.Root
                                 checked={config.extractScreenshots}
-                                onChange={(e) => onChange({ ...config, extractScreenshots: e.target.checked })}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <label htmlFor="extract-screens" className="text-sm text-gray-700">{t.dashboard.enable}</label>
-                        </div>
-                    </div>
+                                onCheckedChange={(e) => onChange({ ...config, extractScreenshots: e.checked })}
+                            >
+                                <Switch.HiddenInput />
+                                <Switch.Control>
+                                    <Switch.Thumb />
+                                </Switch.Control>
+                                <Switch.Label>{t.dashboard.enable}</Switch.Label>
+                            </Switch.Root>
+                        </HStack>
+                    </Box>
                 )}
-            </div>
+            </Grid>
 
             {!isYoutube && config.extractScreenshots && (
-                <div>
-                    <label className={styles.label}>{t.dashboard.frequency}</label>
-                    <select
-                        className={styles.select}
-                        value={config.screenshotFrequency}
-                        onChange={(e) => onChange({ ...config, screenshotFrequency: e.target.value as any })}
-                    >
-                        <option value="minimal">{t.dashboard.minimal}</option>
-                        <option value="moderate">{t.dashboard.moderate}</option>
-                        <option value="detailed">{t.dashboard.detailed}</option>
-                    </select>
-                </div>
+                <Box>
+                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.frequency}</Text>
+                    <NativeSelect.Root>
+                        <NativeSelect.Field
+                            value={config.screenshotFrequency}
+                            onChange={(e) => onChange({ ...config, screenshotFrequency: e.currentTarget.value as any })}
+                        >
+                            <option value="minimal">{t.dashboard.minimal}</option>
+                            <option value="moderate">{t.dashboard.moderate}</option>
+                            <option value="detailed">{t.dashboard.detailed}</option>
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                </Box>
             )}
 
-            <div>
-                <label className={styles.label}>{t.dashboard.prompt}</label>
-                <textarea
-                    className={`${styles.textarea} h-32 resize-none`}
+            <Box>
+                <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.prompt}</Text>
+                <Textarea
                     value={config.prompt}
                     onChange={(e) => onChange({ ...config, prompt: e.target.value })}
                     placeholder={t.dashboard.promptPlaceholder}
+                    h="32"
+                    resize="none"
                 />
-            </div>
-        </div>
+            </Box>
+        </VStack>
     );
 };

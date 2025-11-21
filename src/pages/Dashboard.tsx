@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import styles from './Dashboard.module.css';
+import { Grid, VStack, Box, Heading } from '@chakra-ui/react';
 import { VideoSourceSelector, type VideoSource } from '../components/dashboard/VideoSourceSelector';
 import { PromptSettings, type PromptConfig } from '../components/dashboard/PromptSettings';
 import { ActionPanel } from '../components/dashboard/ActionPanel';
@@ -137,7 +137,7 @@ export const Dashboard: React.FC = () => {
 
     const handleDownload = async () => {
         if (!resultMarkdown) return;
-        
+
         // 動画名を取得してzipファイル名に使用
         let zipFileName = "document_package.zip";
         if (videoSource) {
@@ -154,7 +154,7 @@ export const Dashboard: React.FC = () => {
                 zipFileName = `${sanitizedTitle}.zip`;
             }
         }
-        
+
         const zipBlob = await ArchiveService.createZip(resultMarkdown, extractedImages);
         const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
@@ -167,41 +167,41 @@ export const Dashboard: React.FC = () => {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.leftPane}>
-                <div className={styles.card}>
-                    <h2 className={styles.cardHeader}>{t.dashboard.videoSourceTitle}</h2>
+        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} h={{ lg: "calc(100vh - 100px)" }}>
+            <VStack gap={6} overflowY="auto" p={1} align="stretch">
+                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
+                    <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
                     <VideoSourceSelector value={videoSource} onChange={setVideoSource} />
-                </div>
+                </Box>
 
-                <div className={styles.card}>
-                    <h2 className={styles.cardHeader}>{t.dashboard.promptSettingsTitle}</h2>
+                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
+                    <Heading size="md" mb={4}>{t.dashboard.promptSettingsTitle}</Heading>
                     <PromptSettings
                         config={promptConfig}
                         onChange={setPromptConfig}
                         isYoutube={videoSource?.type === 'youtube'}
                     />
-                </div>
+                </Box>
 
                 <ActionPanel
                     onGenerate={handleGenerate}
                     isProcessing={isProcessing}
                     disabled={!videoSource}
                 />
-            </div>
+            </VStack>
 
-            <div className={styles.rightPane}>
-                <div className={styles.card}>
-                    <h2 className={styles.cardHeader}>{t.dashboard.statusTitle}</h2>
+            <VStack gap={6} overflowY="auto" p={1} align="stretch">
+                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
+                    <Heading size="md" mb={4}>{t.dashboard.statusTitle}</Heading>
                     <ProgressSection progress={progress} statusMessage={statusMessage} />
-                </div>
+                </Box>
 
                 <LogSection logs={logs} onClear={clearLogs} />
 
-                <div className={`${styles.card} flex-1 min-h-[300px]`}>
+                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px" flex="1" minH="300px">
                     <ResultPreview content={resultMarkdown} onDownload={handleDownload} />
-                </div>
-            </div>
-        </div>
+                </Box>
+            </VStack>
+        </Grid>
     );
 };

@@ -11,8 +11,12 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@chakra-ui/react": "^3.29.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "framer-motion": "^12.23.24",
     "jszip": "^3.10.1",
     "lucide-react": "^0.554.0",
     "react": "^19.2.0",
