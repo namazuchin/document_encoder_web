@@ -1,0 +1,16 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document Shape -->
+  <rect x="12" y="8" width="40" height="48" rx="4" fill="#EEF2FF" stroke="#4F46E5" stroke-width="4"/>
+  
+  <!-- Text Lines -->
+  <path d="M20 20H44" stroke="#A5B4FC" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 28H44" stroke="#A5B4FC" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 36H32" stroke="#A5B4FC" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Play/Action Circle Overlay -->
+  <circle cx="46" cy="46" r="14" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2"/>
+  <path d="M42 40L52 46L42 52V40Z" fill="white"/>
+  
+  <!-- AI Sparkle -->
+  <path d="M56 4L58 10L64 12L58 14L56 20L54 14L48 12L54 10L56 4Z" fill="#FBBF24"/>
+</svg>
