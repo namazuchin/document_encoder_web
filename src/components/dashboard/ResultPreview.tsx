@@ -1,6 +1,6 @@
 import React from 'react';
 import { Download, Copy, Check } from 'lucide-react';
-import styles from './DashboardComponents.module.css';
+import { Box, Flex, Heading, Button, Textarea, HStack } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
 
 interface Props {
@@ -21,31 +21,43 @@ export const ResultPreview: React.FC<Props> = ({ content, onDownload }) => {
     if (!content) return null;
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-700">{t.dashboard.resultTitle}</h3>
-                <div className="flex gap-2">
-                    <button
+        <Box display="flex" flexDirection="column" h="full">
+            <Flex align="center" justify="space-between" mb={2}>
+                <Heading size="sm" color="gray.700">{t.dashboard.resultTitle}</Heading>
+                <HStack gap={2}>
+                    <Button
                         onClick={handleCopy}
-                        className={`${styles.button} ${styles.secondaryButton} text-xs py-1 px-2`}
+                        size="xs"
+                        variant="outline"
                     >
                         {copied ? <Check size={14} /> : <Copy size={14} />}
-                        {copied ? t.common.copied : t.common.copy}
-                    </button>
-                    <button
+                        <Box as="span" ml={1}>{copied ? t.common.copied : t.common.copy}</Box>
+                    </Button>
+                    <Button
                         onClick={onDownload}
-                        className={`${styles.button} ${styles.primaryButton} text-xs py-1 px-2`}
+                        size="xs"
+                        colorScheme="blue"
                     >
                         <Download size={14} />
-                        {t.common.download}
-                    </button>
-                </div>
-            </div>
-            <textarea
-                className="flex-1 w-full p-4 border border-gray-200 rounded-lg font-mono text-sm bg-gray-50 resize-none focus:outline-none"
+                        <Box as="span" ml={1}>{t.common.download}</Box>
+                    </Button>
+                </HStack>
+            </Flex>
+            <Textarea
+                flex="1"
+                w="full"
+                p={4}
+                borderWidth="1px"
+                borderColor="gray.200"
+                rounded="lg"
+                fontFamily="mono"
+                fontSize="sm"
+                bg="gray.50"
+                resize="none"
+                _focus={{ outline: 'none', borderColor: 'blue.500', ring: 1, ringColor: 'blue.500' }}
                 value={content}
                 readOnly
             />
-        </div>
+        </Box>
     );
 };
