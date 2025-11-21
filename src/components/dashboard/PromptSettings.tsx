@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { VStack, Box, Text, NativeSelect, Grid, HStack, Switch, Textarea } from '@chakra-ui/react';
+import { VStack, Box, Text, NativeSelect, HStack, Switch, Textarea } from '@chakra-ui/react';
 import { Image as ImageIcon } from 'lucide-react';
 
 export interface PromptConfig {
@@ -95,12 +95,10 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
 
                         <HStack gap={2} alignItems="center" flex="0 0 auto">
                             <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">{t.dashboard.frequency}:</Text>
-                            <NativeSelect.Root size="sm" width="auto" disabled={!config.extractScreenshots}>
+                            <NativeSelect.Root size="sm" width="auto" disabled={!config.extractScreenshots} opacity={config.extractScreenshots ? 1 : 0.5}>
                                 <NativeSelect.Field
                                     value={config.screenshotFrequency}
                                     onChange={(e) => onChange({ ...config, screenshotFrequency: e.currentTarget.value as any })}
-                                    disabled={!config.extractScreenshots}
-                                    opacity={config.extractScreenshots ? 1 : 0.5}
                                 >
                                     <option value="minimal">{t.dashboard.minimal}</option>
                                     <option value="moderate">{t.dashboard.moderate}</option>
