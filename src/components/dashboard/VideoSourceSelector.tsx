@@ -16,11 +16,12 @@ export interface VideoSource {
 interface Props {
     value: VideoSource | null;
     onChange: (source: VideoSource | null) => void;
+    mode: 'file' | 'youtube';
+    onModeChange: (mode: 'file' | 'youtube') => void;
 }
 
-export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
+export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, onModeChange }) => {
     const { t } = useApp();
-    const [mode, setMode] = useState<'file' | 'youtube'>('file');
     const [ytUrl, setYtUrl] = useState('');
     const [ytTitle, setYtTitle] = useState('');
 
@@ -37,7 +38,7 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
     };
 
     return (
-        <Tabs.Root value={mode} onValueChange={(e) => setMode(e.value as 'file' | 'youtube')} variant="enclosed">
+        <Tabs.Root value={mode} onValueChange={(e) => onModeChange(e.value as 'file' | 'youtube')} variant="enclosed">
             <Tabs.List>
                 <Tabs.Trigger value="file">{t.dashboard.localFileTab}</Tabs.Trigger>
                 <Tabs.Trigger value="youtube">{t.dashboard.youtubeTab}</Tabs.Trigger>
