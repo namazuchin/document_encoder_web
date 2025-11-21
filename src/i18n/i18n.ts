@@ -52,6 +52,7 @@ export interface Translations {
         noResult: string;
         japanese: string;
         english: string;
+            youtubeScreenshotNotice: string;
     };
     settings: {
         title: string;
@@ -141,6 +142,7 @@ export const translations: Record<Language, Translations> = {
             noResult: '結果がここに表示されます',
             japanese: '日本語',
             english: '英語',
+            youtubeScreenshotNotice: 'YouTubeを選択した場合、スクリーンショットの埋め込みはできません。',
         },
         settings: {
             title: '設定',
@@ -228,6 +230,7 @@ export const translations: Record<Language, Translations> = {
             noResult: 'Results will appear here',
             japanese: 'Japanese',
             english: 'English',
+            youtubeScreenshotNotice: 'Screenshot embedding is unavailable when using a YouTube source.',
         },
         settings: {
             title: 'Settings',
