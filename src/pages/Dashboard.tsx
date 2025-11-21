@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Grid, VStack, Box, Heading } from '@chakra-ui/react';
+import { Grid, VStack, Box, Heading, Text } from '@chakra-ui/react';
 import { VideoSourceSelector, type VideoSource } from '../components/dashboard/VideoSourceSelector';
 import { PromptSettings, type PromptConfig } from '../components/dashboard/PromptSettings';
 import { ActionPanel } from '../components/dashboard/ActionPanel';
@@ -71,8 +71,9 @@ export const Dashboard: React.FC = () => {
 
             const finalPrompt = `${promptConfig.prompt}\n\nTarget Video: ${videoSource.type === 'youtube' ? videoSource.youtubeUrl : '(Attached Video)'}\nLanguage: ${promptConfig.language === 'ja' ? 'Japanese' : 'English'}`;
 
-            // スクリーンショット指示を生成
-            const screenshotInstruction = promptConfig.extractScreenshots
+            // スクリーンショット指示を生成（YouTubeソースでは無効）
+            const shouldBuildScreenshotInstruction = promptConfig.extractScreenshots && videoSource?.type === 'file';
+            const screenshotInstruction = shouldBuildScreenshotInstruction
                 ? buildScreenshotPromptInstruction(promptConfig.screenshotFrequency)
                 : undefined;
 
@@ -126,9 +127,10 @@ export const Dashboard: React.FC = () => {
             setProgress(100);
             setStatusMessage(t.messages.done);
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            addLog(error.message || "Unknown error occurred", "error");
+            const message = error instanceof Error ? error.message : "Unknown error occurred";
+            addLog(message, "error");
             setStatusMessage(t.messages.failed);
         } finally {
             setIsProcessing(false);
@@ -168,10 +170,24 @@ export const Dashboard: React.FC = () => {
 
     return (
         <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} h={{ lg: "calc(100vh - 100px)" }}>
-            <VStack gap={6} overflowY="auto" p={1} align="stretch">
+            <VStack gap={6} overflowY="auto" p={1} align="stretch" className="column-scroll-hidden">
                 <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
                     <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
                     <VideoSourceSelector value={videoSource} onChange={setVideoSource} />
+                    {videoSource?.type === 'youtube' && (
+                        <Text
+                            mt={4}
+                            fontSize="sm"
+                            color="orange.700"
+                            bg="orange.50"
+                            borderWidth="1px"
+                            borderColor="orange.100"
+                            rounded="md"
+                            p={3}
+                        >
+                            {t.dashboard.youtubeScreenshotNotice}
+                        </Text>
+                    )}
                 </Box>
 
                 <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
@@ -190,7 +206,7 @@ export const Dashboard: React.FC = () => {
                 />
             </VStack>
 
-            <VStack gap={6} overflowY="auto" p={1} align="stretch">
+            <VStack gap={6} overflowY="auto" p={1} align="stretch" className="column-scroll-hidden">
                 <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
                     <Heading size="md" mb={4}>{t.dashboard.statusTitle}</Heading>
                     <ProgressSection progress={progress} statusMessage={statusMessage} />
