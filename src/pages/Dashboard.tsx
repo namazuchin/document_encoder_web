@@ -47,6 +47,7 @@ export const Dashboard: React.FC = () => {
         try {
             const gemini = new GeminiClient(settings.apiKey);
             let fileUri = '';
+            let mimeType: string | undefined = "video/mp4";
 
             // 1. Process Video (Upload only, no screenshot extraction yet)
             if (videoSource.type === 'file' && videoSource.file) {
@@ -66,6 +67,8 @@ export const Dashboard: React.FC = () => {
                 setStatusMessage("Processing YouTube video...");
                 addLog(`YouTube URL: ${videoSource.youtubeUrl}`);
                 addLog("YouTube mode: Skipping local processing and upload. Passing URL to model.");
+                fileUri = videoSource.youtubeUrl;
+                mimeType = undefined;
             }
 
             // 2. Generate Document with screenshot instruction
@@ -81,7 +84,7 @@ export const Dashboard: React.FC = () => {
                 ? buildScreenshotPromptInstruction(promptConfig.screenshotFrequency)
                 : undefined;
 
-            const text = await gemini.generateContent(settings.model, finalPrompt, fileUri, screenshotInstruction);
+            const text = await gemini.generateContent(settings.model, finalPrompt, fileUri, mimeType, screenshotInstruction);
             setProgress(70);
             addLog(t.messages.generationComplete, "success");
 
