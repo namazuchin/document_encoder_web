@@ -41,13 +41,13 @@ export const AppLayout: React.FC = () => {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                rightIcon={<Icon as={ChevronDown} />}
                                 px={2}
                                 borderRadius="full"
                             >
                                 <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full" fontSize="xs">
                                     {currentModelName}
                                 </Badge>
+                                <Icon as={ChevronDown} ml={2} />
                             </Button>
                         </Menu.Trigger>
                         <Menu.Positioner>
