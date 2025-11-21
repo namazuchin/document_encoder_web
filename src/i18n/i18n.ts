@@ -35,6 +35,8 @@ export interface Translations {
         selectPreset: string;
         defaultPreset: string;
         language: string;
+        screenshotSettings: string;
+        embedScreenshots: string;
         screenshots: string;
         enable: string;
         frequency: string;
@@ -122,6 +124,8 @@ export const translations: Record<Language, Translations> = {
             selectPreset: 'プリセットを選択...',
             defaultPreset: 'デフォルト (手動)',
             language: '言語',
+            screenshotSettings: 'スクリーンショット埋め込み設定',
+            embedScreenshots: 'スクリーンショットを埋め込む',
             screenshots: 'スクリーンショット',
             enable: '有効化',
             frequency: '頻度',
@@ -207,6 +211,8 @@ export const translations: Record<Language, Translations> = {
             selectPreset: 'Select a preset...',
             defaultPreset: 'Default (Manual)',
             language: 'Language',
+            screenshotSettings: 'Screenshot Settings',
+            embedScreenshots: 'Embed screenshots',
             screenshots: 'Screenshots',
             enable: 'Enable',
             frequency: 'Frequency',
