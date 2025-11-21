@@ -26,7 +26,7 @@ export const AppLayout: React.FC = () => {
                 align="center"
                 justify="space-between"
             >
-                {/* @ts-ignore */}
+                {/* @ts-expect-error Chakra UI 'as' prop type mismatch with RouterLink */}
                 <Box as={RouterLink} to="/" _hover={{ textDecoration: 'none' }}>
                     <Flex align="center" gap={2}>
                         <Image src="/favicon.svg" boxSize={8} alt="Logo" />

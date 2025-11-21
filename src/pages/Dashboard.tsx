@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Grid, VStack, Box, Heading, Text } from '@chakra-ui/react';
-import { VideoSourceSelector, type VideoSource } from '../components/dashboard/VideoSourceSelector';
+import { VideoSourceSelector } from '../components/dashboard/VideoSourceSelector';
 import { PromptSettings, type PromptConfig } from '../components/dashboard/PromptSettings';
 import { ActionPanel } from '../components/dashboard/ActionPanel';
 import { ProgressSection } from '../components/dashboard/ProgressSection';
@@ -11,11 +11,15 @@ import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
 import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, formatTimestampToFilename } from '../services/screenshot';
+import { type VideoSource } from '../types';
 
 export const Dashboard: React.FC = () => {
-    const { settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, progress, setProgress, statusMessage, setStatusMessage, t } = useApp();
+    const { 
+        settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, 
+        progress, setProgress, statusMessage, setStatusMessage, t,
+        videoSource, setVideoSource, videoSourceMode, setVideoSourceMode
+    } = useApp();
 
-    const [videoSource, setVideoSource] = useState<VideoSource | null>(null);
     const [promptConfig, setPromptConfig] = useState<PromptConfig>({
         prompt: '',
         language: 'ja',
@@ -24,7 +28,6 @@ export const Dashboard: React.FC = () => {
     });
     const [resultMarkdown, setResultMarkdown] = useState('');
     const [extractedImages, setExtractedImages] = useState<{ blob: Blob; name: string }[]>([]);
-    const [videoSourceMode, setVideoSourceMode] = useState<'file' | 'youtube'>('file');
 
     const activeSourceType = videoSource?.type ?? videoSourceMode;
     const isYoutubeSelected = activeSourceType === 'youtube';

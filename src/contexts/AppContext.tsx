@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
-import { type AppSettings, type ProcessingLog, type PromptPreset } from '../types';
+import { type AppSettings, type ProcessingLog, type PromptPreset, type VideoSource } from '../types';
 import { StorageService } from '../services/storage';
 import { useTranslation as getTranslation, type Language, type Translations } from '../i18n/i18n';
 
@@ -19,6 +19,10 @@ interface AppContextType {
     updatePresets: (presets: PromptPreset[]) => void;
     language: Language;
     t: Translations;
+    videoSource: VideoSource | null;
+    setVideoSource: (source: VideoSource | null) => void;
+    videoSourceMode: 'file' | 'youtube';
+    setVideoSourceMode: (mode: 'file' | 'youtube') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -32,6 +36,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [presets, setPresets] = useState<PromptPreset[]>(StorageService.getPresets());
     const [language, setLanguage] = useState<Language>(settings.language);
     const t = getTranslation(language);
+    
+    const [videoSource, setVideoSource] = useState<VideoSource | null>(null);
+    const [videoSourceMode, setVideoSourceMode] = useState<'file' | 'youtube'>('file');
 
     const updateSettings = (newSettings: AppSettings, persist: boolean = true) => {
         setSettings(newSettings);
@@ -68,7 +75,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             presets,
             updatePresets,
             language,
-            t
+            t,
+            videoSource,
+            setVideoSource,
+            videoSourceMode,
+            setVideoSourceMode
         }}>
             {children}
         </AppContext.Provider>

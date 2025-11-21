@@ -1,17 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Youtube, X } from 'lucide-react';
 import {
     Box, Tabs, Input, VStack, Icon, Text, Flex, IconButton,
     Button
 } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
-
-export interface VideoSource {
-    type: 'file' | 'youtube';
-    file?: File;
-    youtubeUrl?: string;
-    youtubeTitle?: string;
-}
+import { VideoSource } from '../../types';
 
 interface Props {
     value: VideoSource | null;
@@ -24,6 +18,14 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
     const { t } = useApp();
     const [ytUrl, setYtUrl] = useState('');
     const [ytTitle, setYtTitle] = useState('');
+
+    // valueが更新されたら入力欄にも反映
+    useEffect(() => {
+        if (value?.type === 'youtube') {
+             setYtUrl(value.youtubeUrl || '');
+             setYtTitle(value.youtubeTitle || '');
+        }
+    }, [value]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {

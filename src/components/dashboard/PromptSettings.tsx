@@ -30,7 +30,8 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
         if (!config.prompt) {
             onChange({ ...config, prompt: DEFAULT_PROMPTS[config.language] });
         }
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config.language]);
 
     const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const presetId = e.target.value;
@@ -98,7 +99,7 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
                             <NativeSelect.Root size="sm" width="auto" disabled={!config.extractScreenshots}>
                                 <NativeSelect.Field
                                     value={config.screenshotFrequency}
-                                    onChange={(e) => onChange({ ...config, screenshotFrequency: e.currentTarget.value as any })}
+                                    onChange={(e) => onChange({ ...config, screenshotFrequency: e.currentTarget.value as PromptConfig['screenshotFrequency'] })}
                                     opacity={config.extractScreenshots ? 1 : 0.5}
                                 >
                                     <option value="minimal">{t.dashboard.minimal}</option>
