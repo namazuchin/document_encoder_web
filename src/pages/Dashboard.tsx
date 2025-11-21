@@ -24,6 +24,10 @@ export const Dashboard: React.FC = () => {
     });
     const [resultMarkdown, setResultMarkdown] = useState('');
     const [extractedImages, setExtractedImages] = useState<{ blob: Blob; name: string }[]>([]);
+    const [videoSourceMode, setVideoSourceMode] = useState<'file' | 'youtube'>('file');
+
+    const activeSourceType = videoSource?.type ?? videoSourceMode;
+    const isYoutubeSelected = activeSourceType === 'youtube';
 
     const videoProcessor = useRef(new VideoProcessor());
 
@@ -173,8 +177,13 @@ export const Dashboard: React.FC = () => {
             <VStack gap={6} p={1} align="stretch">
                 <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
                     <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
-                    <VideoSourceSelector value={videoSource} onChange={setVideoSource} />
-                    {videoSource?.type === 'youtube' && (
+                    <VideoSourceSelector
+                        value={videoSource}
+                        onChange={setVideoSource}
+                        mode={videoSourceMode}
+                        onModeChange={setVideoSourceMode}
+                    />
+                    {isYoutubeSelected && (
                         <Text
                             mt={4}
                             fontSize="sm"
@@ -195,7 +204,7 @@ export const Dashboard: React.FC = () => {
                     <PromptSettings
                         config={promptConfig}
                         onChange={setPromptConfig}
-                        isYoutube={videoSource?.type === 'youtube'}
+                        isYoutube={isYoutubeSelected}
                     />
                 </Box>
 
