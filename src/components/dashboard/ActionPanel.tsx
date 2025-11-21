@@ -1,6 +1,6 @@
 import React from 'react';
-import { Play, Loader2 } from 'lucide-react';
-import styles from './DashboardComponents.module.css';
+import { Play } from 'lucide-react';
+import { Box, Button } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
 
 interface Props {
@@ -12,24 +12,19 @@ interface Props {
 export const ActionPanel: React.FC<Props> = ({ onGenerate, isProcessing, disabled }) => {
     const { t } = useApp();
     return (
-        <div className="pt-4 border-t border-gray-200">
-            <button
-                className={`${styles.button} ${styles.primaryButton} w-full py-3 text-lg`}
+        <Box pt={4} borderTopWidth="1px" borderColor="gray.200">
+            <Button
+                width="full"
+                size="lg"
+                colorScheme="blue"
                 onClick={onGenerate}
                 disabled={disabled || isProcessing}
+                loading={isProcessing}
+                loadingText={t.dashboard.processing}
             >
-                {isProcessing ? (
-                    <>
-                        <Loader2 className="animate-spin" />
-                        {t.dashboard.processing}
-                    </>
-                ) : (
-                    <>
-                        <Play fill="currentColor" />
-                        {t.common.generate}
-                    </>
-                )}
-            </button>
-        </div>
+                <Play fill="currentColor" style={{ marginRight: '8px' }} />
+                {t.common.generate}
+            </Button>
+        </Box>
     );
 };
