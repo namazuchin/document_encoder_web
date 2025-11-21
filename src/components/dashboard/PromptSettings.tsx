@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { VStack, Box, Text, NativeSelect, Grid, HStack, Switch, Textarea } from '@chakra-ui/react';
+import { Image as ImageIcon } from 'lucide-react';
 
 export interface PromptConfig {
     prompt: string;
@@ -59,54 +60,56 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
                 </NativeSelect.Root>
             </Box>
 
-            <Grid templateColumns="repeat(2, 1fr)" gap={4}>
-                <Box>
-                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.language}</Text>
-                    <NativeSelect.Root>
-                        <NativeSelect.Field
-                            value={config.language}
-                            onChange={(e) => onChange({ ...config, language: e.currentTarget.value as 'ja' | 'en' })}
-                        >
-                            <option value="ja">{t.dashboard.japanese}</option>
-                            <option value="en">{t.dashboard.english}</option>
-                        </NativeSelect.Field>
-                        <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                </Box>
+            <Box>
+                <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.language}</Text>
+                <NativeSelect.Root>
+                    <NativeSelect.Field
+                        value={config.language}
+                        onChange={(e) => onChange({ ...config, language: e.currentTarget.value as 'ja' | 'en' })}
+                    >
+                        <option value="ja">{t.dashboard.japanese}</option>
+                        <option value="en">{t.dashboard.english}</option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                </NativeSelect.Root>
+            </Box>
 
-                {!isYoutube && (
-                    <Box>
-                        <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.screenshots}</Text>
-                        <HStack gap={2} mt={2}>
-                            <Switch.Root
-                                checked={config.extractScreenshots}
-                                onCheckedChange={(e) => onChange({ ...config, extractScreenshots: e.checked })}
-                            >
-                                <Switch.HiddenInput />
-                                <Switch.Control>
-                                    <Switch.Thumb />
-                                </Switch.Control>
-                                <Switch.Label>{t.dashboard.enable}</Switch.Label>
-                            </Switch.Root>
+            {!isYoutube && (
+                <Box p={4} borderWidth="1px" borderRadius="md" borderColor="gray.200">
+                    <HStack mb={3} gap={2} color="gray.700">
+                        <ImageIcon size={18} />
+                        <Text fontSize="sm" fontWeight="bold">{t.dashboard.screenshotSettings}</Text>
+                    </HStack>
+
+                    <HStack gap={3} alignItems="center" flexWrap="wrap">
+                        <Switch.Root
+                            checked={config.extractScreenshots}
+                            onCheckedChange={(e) => onChange({ ...config, extractScreenshots: e.checked })}
+                        >
+                            <Switch.HiddenInput />
+                            <Switch.Control>
+                                <Switch.Thumb />
+                            </Switch.Control>
+                            <Switch.Label fontSize="sm">{t.dashboard.embedScreenshots}</Switch.Label>
+                        </Switch.Root>
+
+                        <HStack gap={2} alignItems="center" flex="0 0 auto">
+                            <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">{t.dashboard.frequency}:</Text>
+                            <NativeSelect.Root size="sm" width="auto" disabled={!config.extractScreenshots}>
+                                <NativeSelect.Field
+                                    value={config.screenshotFrequency}
+                                    onChange={(e) => onChange({ ...config, screenshotFrequency: e.currentTarget.value as any })}
+                                    disabled={!config.extractScreenshots}
+                                    opacity={config.extractScreenshots ? 1 : 0.5}
+                                >
+                                    <option value="minimal">{t.dashboard.minimal}</option>
+                                    <option value="moderate">{t.dashboard.moderate}</option>
+                                    <option value="detailed">{t.dashboard.detailed}</option>
+                                </NativeSelect.Field>
+                                <NativeSelect.Indicator />
+                            </NativeSelect.Root>
                         </HStack>
-                    </Box>
-                )}
-            </Grid>
-
-            {!isYoutube && config.extractScreenshots && (
-                <Box>
-                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.dashboard.frequency}</Text>
-                    <NativeSelect.Root>
-                        <NativeSelect.Field
-                            value={config.screenshotFrequency}
-                            onChange={(e) => onChange({ ...config, screenshotFrequency: e.currentTarget.value as any })}
-                        >
-                            <option value="minimal">{t.dashboard.minimal}</option>
-                            <option value="moderate">{t.dashboard.moderate}</option>
-                            <option value="detailed">{t.dashboard.detailed}</option>
-                        </NativeSelect.Field>
-                        <NativeSelect.Indicator />
-                    </NativeSelect.Root>
+                    </HStack>
                 </Box>
             )}
 
