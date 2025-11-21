@@ -1,11 +1,18 @@
 import React from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
-import { Settings, FileText, List } from 'lucide-react';
-import { Box, Flex, Heading, HStack, Icon, IconButton } from '@chakra-ui/react';
+import { Settings, FileText, List, ChevronDown } from 'lucide-react';
+import { Box, Flex, Heading, HStack, Icon, IconButton, Badge, Menu, Button } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
+import { GEMINI_MODELS } from '../../types';
 
 export const AppLayout: React.FC = () => {
-    const { t } = useApp();
+    const { t, settings, updateSettings } = useApp();
+
+    const currentModelName = GEMINI_MODELS.find(m => m.id === settings.model)?.name || settings.model;
+
+    const handleModelChange = (modelId: string) => {
+        updateSettings({ ...settings, model: modelId }, false);
+    };
 
     return (
         <Box minH="100vh" bg="gray.50" display="flex" flexDirection="column">
@@ -29,6 +36,35 @@ export const AppLayout: React.FC = () => {
                     </Flex>
                 </Box>
                 <HStack as="nav" gap={4}>
+                    <Menu.Root>
+                        <Menu.Trigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                rightIcon={<Icon as={ChevronDown} />}
+                                px={2}
+                                borderRadius="full"
+                            >
+                                <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full" fontSize="xs">
+                                    {currentModelName}
+                                </Badge>
+                            </Button>
+                        </Menu.Trigger>
+                        <Menu.Positioner>
+                            <Menu.Content zIndex={10}>
+                                {GEMINI_MODELS.map(model => (
+                                    <Menu.Item
+                                        key={model.id}
+                                        value={model.id}
+                                        onClick={() => handleModelChange(model.id)}
+                                        fontWeight={settings.model === model.id ? 'bold' : 'normal'}
+                                    >
+                                        {model.name}
+                                    </Menu.Item>
+                                ))}
+                            </Menu.Content>
+                        </Menu.Positioner>
+                    </Menu.Root>
                     <RouterLink to="/prompts" title={t.layout.promptPresetsTooltip}>
                         <IconButton
                             aria-label={t.layout.promptPresetsTooltip}
