@@ -96,6 +96,7 @@ export class GeminiClient {
     model: string,
     prompt: string,
     fileUri?: string,
+    mimeType?: string,
     screenshotInstruction?: string
   ): Promise<string> {
     const url = `${this.baseUrl}/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
@@ -106,7 +107,12 @@ export class GeminiClient {
     const contents = [
       {
         parts: [
-          ...(fileUri ? [{ file_data: { mime_type: "video/mp4", file_uri: fileUri } }] : []),
+          ...(fileUri ? [{
+            file_data: {
+              file_uri: fileUri,
+              ...(mimeType ? { mime_type: mimeType } : {})
+            }
+          }] : []),
           { text: finalPrompt }
         ]
       }
