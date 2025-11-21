@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { type PromptPreset } from '../types';
 import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
-import styles from '../components/dashboard/DashboardComponents.module.css';
+import { Box, Heading, Button, VStack, HStack, Input, Textarea, Text, IconButton, Flex } from '@chakra-ui/react';
 
 export const PromptManager: React.FC = () => {
     const { presets, updatePresets, t } = useApp();
@@ -49,80 +49,103 @@ export const PromptManager: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6 border border-gray-200">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">{t.promptManager.title}</h2>
+        <Box maxW="4xl" mx="auto" bg="white" rounded="lg" shadow="sm" p={6} borderWidth="1px" borderColor="gray.200">
+            <Flex justify="space-between" align="center" mb={6}>
+                <Heading size="md" color="gray.800">{t.promptManager.title}</Heading>
                 {!editingId && (
-                    <button onClick={handleCreate} className={`${styles.button} ${styles.primaryButton}`}>
-                        <Plus size={16} /> {t.promptManager.newPreset}
-                    </button>
+                    <Button onClick={handleCreate} colorScheme="blue">
+                        <Plus size={16} />
+                        <Box as="span" ml={2}>{t.promptManager.newPreset}</Box>
+                    </Button>
                 )}
-            </div>
+            </Flex>
 
             {editingId && editForm ? (
-                <div className="bg-gray-50 p-4 rounded-lg border border-blue-200 mb-6">
-                    <h3 className="font-semibold mb-4 text-blue-800">
+                <Box bg="gray.50" p={4} rounded="lg" borderWidth="1px" borderColor="blue.200" mb={6}>
+                    <Heading size="sm" mb={4} color="blue.800">
                         {presets.find(p => p.id === editForm.id) ? t.promptManager.editPreset : t.promptManager.newPreset}
-                    </h3>
-                    <div className="space-y-4">
-                        <div>
-                            <label className={styles.label}>{t.promptManager.nameLabel}</label>
-                            <input
+                    </Heading>
+                    <VStack gap={4} align="stretch">
+                        <Box>
+                            <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.promptManager.nameLabel}</Text>
+                            <Input
                                 type="text"
-                                className={styles.input}
                                 value={editForm.name}
                                 onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                bg="white"
                             />
-                        </div>
-                        <div>
-                            <label className={styles.label}>{t.promptManager.contentLabel}</label>
-                            <textarea
-                                className={`${styles.textarea} h-48`}
+                        </Box>
+                        <Box>
+                            <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.promptManager.contentLabel}</Text>
+                            <Textarea
+                                h="48"
                                 value={editForm.content}
                                 onChange={e => setEditForm({ ...editForm, content: e.target.value })}
+                                bg="white"
                             />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            <button onClick={handleCancel} className={`${styles.button} ${styles.secondaryButton}`}>
-                                <X size={16} /> {t.common.cancel}
-                            </button>
-                            <button onClick={handleSave} className={`${styles.button} ${styles.primaryButton}`}>
-                                <Save size={16} /> {t.common.save}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                        </Box>
+                        <HStack gap={2} justify="flex-end">
+                            <Button onClick={handleCancel} variant="ghost">
+                                <X size={16} />
+                                <Box as="span" ml={2}>{t.common.cancel}</Box>
+                            </Button>
+                            <Button onClick={handleSave} colorScheme="blue">
+                                <Save size={16} />
+                                <Box as="span" ml={2}>{t.common.save}</Box>
+                            </Button>
+                        </HStack>
+                    </VStack>
+                </Box>
             ) : (
-                <div className="space-y-3">
+                <VStack gap={3} align="stretch">
                     {presets.length === 0 && (
-                        <div className="text-center text-gray-500 py-8">
+                        <Text textAlign="center" color="gray.500" py={8}>
                             {t.promptManager.noPresets}
-                        </div>
+                        </Text>
                     )}
                     {presets.map(preset => (
-                        <div key={preset.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-                            <div>
-                                <h3 className="font-medium text-gray-900">{preset.name}</h3>
-                                <p className="text-sm text-gray-500 truncate max-w-md">{preset.content}</p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
+                        <Flex
+                            key={preset.id}
+                            align="center"
+                            justify="space-between"
+                            p={4}
+                            bg="gray.50"
+                            rounded="lg"
+                            borderWidth="1px"
+                            borderColor="gray.200"
+                            _hover={{ borderColor: 'blue.300' }}
+                            transition="all 0.2s"
+                        >
+                            <Box overflow="hidden" mr={4}>
+                                <Heading size="sm" color="gray.900" mb={1}>{preset.name}</Heading>
+                                <Text fontSize="sm" color="gray.500" truncate maxW="md">{preset.content}</Text>
+                            </Box>
+                            <HStack gap={2}>
+                                <IconButton
+                                    aria-label="Edit"
                                     onClick={() => handleEdit(preset)}
-                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full"
+                                    variant="ghost"
+                                    color="gray.600"
+                                    _hover={{ color: 'blue.600', bg: 'blue.50' }}
+                                    rounded="full"
                                 >
                                     <Edit2 size={18} />
-                                </button>
-                                <button
+                                </IconButton>
+                                <IconButton
+                                    aria-label="Delete"
                                     onClick={() => handleDelete(preset.id)}
-                                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full"
+                                    variant="ghost"
+                                    color="gray.600"
+                                    _hover={{ color: 'red.600', bg: 'red.50' }}
+                                    rounded="full"
                                 >
                                     <Trash2 size={18} />
-                                </button>
-                            </div>
-                        </div>
+                                </IconButton>
+                            </HStack>
+                        </Flex>
                     ))}
-                </div>
+                </VStack>
             )}
-        </div>
+        </Box>
     );
 };

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Upload, Youtube, X } from 'lucide-react';
-import styles from './DashboardComponents.module.css';
+import {
+    Box, Tabs, Input, VStack, Icon, Text, Flex, IconButton,
+    Button
+} from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
 
 export interface VideoSource {
@@ -34,110 +37,143 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange }) => {
     };
 
     return (
-        <div>
-            <div className="flex border-b border-gray-200 mb-4">
-                <button
-                    className={`px-4 py-2 text-sm font-medium ${mode === 'file' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setMode('file')}
-                >
-                    {t.dashboard.localFileTab}
-                </button>
-                <button
-                    className={`px-4 py-2 text-sm font-medium ${mode === 'youtube' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setMode('youtube')}
-                >
-                    {t.dashboard.youtubeTab}
-                </button>
-            </div>
+        <Tabs.Root value={mode} onValueChange={(e) => setMode(e.value as 'file' | 'youtube')} variant="enclosed">
+            <Tabs.List>
+                <Tabs.Trigger value="file">{t.dashboard.localFileTab}</Tabs.Trigger>
+                <Tabs.Trigger value="youtube">{t.dashboard.youtubeTab}</Tabs.Trigger>
+            </Tabs.List>
 
-            {mode === 'file' ? (
-                <div className="space-y-4">
-                    {!value || value.type !== 'file' ? (
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-                            <input
-                                type="file"
-                                id="video-upload"
-                                className="hidden"
-                                accept="video/*"
-                                onChange={handleFileChange}
-                            />
-                            <label htmlFor="video-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                                <Upload className="w-8 h-8 text-gray-400" />
-                                <span className="text-sm text-gray-600">{t.dashboard.uploadPrompt}</span>
-                                <span className="text-xs text-gray-400">{t.dashboard.uploadHint}</span>
-                            </label>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="p-2 bg-blue-100 rounded text-blue-600">
-                                    <Upload size={20} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{value.file?.name}</p>
-                                    <p className="text-xs text-gray-500">{(value.file!.size / (1024 * 1024)).toFixed(2)} MB</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => onChange(null)}
-                                className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    <div>
-                        <label className={styles.label}>{t.dashboard.youtubeUrl}</label>
-                        <input
-                            type="text"
-                            className={styles.input}
+            <Tabs.Content value="file" px={0} pt={4}>
+                {!value || value.type !== 'file' ? (
+                    <Box
+                        borderWidth={2}
+                        borderStyle="dashed"
+                        borderColor="gray.300"
+                        rounded="lg"
+                        p={8}
+                        textAlign="center"
+                        _hover={{ borderColor: 'blue.500' }}
+                        transition="all 0.2s"
+                    >
+                        <Input
+                            type="file"
+                            id="video-upload"
+                            display="none"
+                            accept="video/*"
+                            onChange={handleFileChange}
+                        />
+                        <label htmlFor="video-upload" style={{ cursor: 'pointer', width: '100%', display: 'block' }}>
+                            <VStack gap={2}>
+                                <Icon as={Upload} boxSize={8} color="gray.400" />
+                                <Text fontSize="sm" color="gray.600">{t.dashboard.uploadPrompt}</Text>
+                                <Text fontSize="xs" color="gray.400">{t.dashboard.uploadHint}</Text>
+                            </VStack>
+                        </label>
+                    </Box>
+                ) : (
+                    <Flex
+                        align="center"
+                        justify="space-between"
+                        p={3}
+                        bg="gray.50"
+                        rounded="md"
+                        borderWidth="1px"
+                        borderColor="gray.200"
+                    >
+                        <Flex align="center" gap={3} overflow="hidden">
+                            <Box p={2} bg="blue.100" rounded="md" color="blue.600">
+                                <Icon as={Upload} boxSize={5} />
+                            </Box>
+                            <Box minW={0}>
+                                <Text fontSize="sm" fontWeight="medium" color="gray.900" truncate>
+                                    {value.file?.name}
+                                </Text>
+                                <Text fontSize="xs" color="gray.500">
+                                    {(value.file!.size / (1024 * 1024)).toFixed(2)} MB
+                                </Text>
+                            </Box>
+                        </Flex>
+                        <IconButton
+                            aria-label="Remove video"
+                            size="sm"
+                            variant="ghost"
+                            color="gray.400"
+                            _hover={{ color: 'red.500', bg: 'red.50' }}
+                            onClick={() => onChange(null)}
+                            rounded="full"
+                        >
+                            <X size={18} />
+                        </IconButton>
+                    </Flex>
+                )}
+            </Tabs.Content>
+
+            <Tabs.Content value="youtube" px={0} pt={4}>
+                <VStack gap={4} align="stretch">
+                    <Box>
+                        <Text mb={2} fontSize="sm" fontWeight="medium">{t.dashboard.youtubeUrl}</Text>
+                        <Input
                             placeholder="https://www.youtube.com/watch?v=..."
                             value={ytUrl}
                             onChange={(e) => setYtUrl(e.target.value)}
                         />
-                    </div>
-                    <div>
-                        <label className={styles.label}>{t.dashboard.videoTitle}</label>
-                        <input
-                            type="text"
-                            className={styles.input}
+                    </Box>
+                    <Box>
+                        <Text mb={2} fontSize="sm" fontWeight="medium">{t.dashboard.videoTitle}</Text>
+                        <Input
                             placeholder={t.dashboard.videoTitle}
                             value={ytTitle}
                             onChange={(e) => setYtTitle(e.target.value)}
                         />
-                    </div>
-                    <button
-                        className={`${styles.button} ${styles.primaryButton} w-full`}
+                    </Box>
+                    <Button
+                        colorScheme="blue"
                         onClick={handleYoutubeSubmit}
                         disabled={!ytUrl || !ytTitle}
+                        width="full"
                     >
                         {t.dashboard.setVideo}
-                    </button>
+                    </Button>
 
                     {value?.type === 'youtube' && (
-                        <div className="mt-2 flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="p-2 bg-red-100 rounded text-red-600">
-                                    <Youtube size={20} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{value.youtubeTitle}</p>
-                                    <p className="text-xs text-gray-500 truncate">{value.youtubeUrl}</p>
-                                </div>
-                            </div>
-                            <button
+                        <Flex
+                            align="center"
+                            justify="space-between"
+                            p={3}
+                            bg="gray.50"
+                            rounded="md"
+                            borderWidth="1px"
+                            borderColor="gray.200"
+                            mt={2}
+                        >
+                            <Flex align="center" gap={3} overflow="hidden">
+                                <Box p={2} bg="red.100" rounded="md" color="red.600">
+                                    <Icon as={Youtube} boxSize={5} />
+                                </Box>
+                                <Box minW={0}>
+                                    <Text fontSize="sm" fontWeight="medium" color="gray.900" truncate>
+                                        {value.youtubeTitle}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.500" truncate>
+                                        {value.youtubeUrl}
+                                    </Text>
+                                </Box>
+                            </Flex>
+                            <IconButton
+                                aria-label="Remove video"
+                                size="sm"
+                                variant="ghost"
+                                color="gray.400"
+                                _hover={{ color: 'red.500', bg: 'red.50' }}
                                 onClick={() => onChange(null)}
-                                className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50"
+                                rounded="full"
                             >
                                 <X size={18} />
-                            </button>
-                        </div>
+                            </IconButton>
+                        </Flex>
                     )}
-                </div>
-            )}
-        </div>
+                </VStack>
+            </Tabs.Content>
+        </Tabs.Root>
     );
 };

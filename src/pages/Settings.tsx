@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GEMINI_MODELS } from '../types';
-import styles from '../components/dashboard/DashboardComponents.module.css';
+import { Box, Heading, VStack, Text, Input, NativeSelect, Button, HStack } from '@chakra-ui/react';
 
 export const Settings: React.FC = () => {
     const { settings, updateSettings, t } = useApp();
@@ -24,91 +24,89 @@ export const Settings: React.FC = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6 border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">{t.settings.title}</h2>
+        <Box maxW="2xl" mx="auto" bg="white" rounded="lg" shadow="sm" p={6} borderWidth="1px" borderColor="gray.200">
+            <Heading size="md" color="gray.800" mb={6}>{t.settings.title}</Heading>
 
-            <div className="space-y-6">
-                <div>
-                    <label className={styles.label}>{t.settings.apiKeyLabel}</label>
-                    <input
+            <VStack gap={6} align="stretch">
+                <Box>
+                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.apiKeyLabel}</Text>
+                    <Input
                         type="password"
-                        className={styles.input}
                         value={tempSettings.apiKey}
                         onChange={(e) => handleFieldChange({ ...tempSettings, apiKey: e.target.value })}
                         placeholder={t.settings.apiKeyPlaceholder}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <Text fontSize="xs" color="gray.500" mt={1}>
                         {t.settings.apiKeyHint}
-                    </p>
-                </div>
+                    </Text>
+                </Box>
 
-                <div>
-                    <label className={styles.label}>{t.settings.modelLabel}</label>
-                    <select
-                        className={styles.select}
-                        value={tempSettings.model}
-                        onChange={(e) => handleFieldChange({ ...tempSettings, model: e.target.value })}
-                    >
-                        {GEMINI_MODELS.map(m => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
-                    </select>
-                </div>
+                <Box>
+                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.modelLabel}</Text>
+                    <NativeSelect.Root>
+                        <NativeSelect.Field
+                            value={tempSettings.model}
+                            onChange={(e) => handleFieldChange({ ...tempSettings, model: e.currentTarget.value })}
+                        >
+                            {GEMINI_MODELS.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                </Box>
 
-                <div>
-                    <label className={styles.label}>{t.settings.languageLabel}</label>
-                    <select
-                        className={styles.select}
-                        value={tempSettings.language}
-                        onChange={(e) => handleFieldChange({ ...tempSettings, language: e.target.value as 'ja' | 'en' })}
-                    >
-                        <option value="ja">{t.dashboard.japanese}</option>
-                        <option value="en">{t.dashboard.english}</option>
-                    </select>
-                </div>
+                <Box>
+                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.languageLabel}</Text>
+                    <NativeSelect.Root>
+                        <NativeSelect.Field
+                            value={tempSettings.language}
+                            onChange={(e) => handleFieldChange({ ...tempSettings, language: e.currentTarget.value as 'ja' | 'en' })}
+                        >
+                            <option value="ja">{t.dashboard.japanese}</option>
+                            <option value="en">{t.dashboard.english}</option>
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                </Box>
 
-                <div>
-                    <label className={styles.label}>{t.settings.maxFileSizeLabel}</label>
-                    <input
+                <Box>
+                    <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.maxFileSizeLabel}</Text>
+                    <Input
                         type="number"
-                        className={styles.input}
                         value={tempSettings.maxFileSize}
                         onChange={(e) => handleFieldChange({ ...tempSettings, maxFileSize: parseInt(e.target.value) || 0 })}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <Text fontSize="xs" color="gray.500" mt={1}>
                         {t.settings.maxFileSizeHint}
-                    </p>
-                </div>
+                    </Text>
+                </Box>
 
-                <div className="flex gap-3 pt-4">
-                    <button
+                <HStack gap={3} pt={4}>
+                    <Button
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className={`px-6 py-2 rounded font-medium transition-colors ${hasChanges
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            }`}
+                        colorScheme="blue"
+                        px={6}
                     >
                         {t.common.save}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleReset}
                         disabled={!hasChanges}
-                        className={`px-6 py-2 rounded font-medium transition-colors ${hasChanges
-                            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
+                        variant="outline"
+                        px={6}
                     >
                         {t.common.reset}
-                    </button>
-                </div>
+                    </Button>
+                </HStack>
 
                 {hasChanges && (
-                    <p className="text-sm text-orange-600 mt-2">
+                    <Text fontSize="sm" color="orange.600" mt={2}>
                         {t.common.unsavedChanges}
-                    </p>
+                    </Text>
                 )}
-            </div>
-        </div>
+            </VStack>
+        </Box>
     );
 };
