@@ -60,6 +60,11 @@ export interface Translations {
         maxFileSizeLabel: string;
         maxFileSizeHint: string;
         languageLabel: string;
+        configManagement: string;
+        exportConfig: string;
+        importConfig: string;
+        importSuccess: string;
+        importError: string;
     };
     promptManager: {
         title: string;
@@ -142,6 +147,11 @@ export const translations: Record<Language, Translations> = {
             maxFileSizeLabel: '最大ファイルサイズ (バイト)',
             maxFileSizeHint: 'デフォルト: 1073741824 (1GB)。大きなファイルはブラウザをクラッシュさせる可能性があります。',
             languageLabel: '表示言語',
+            configManagement: '設定管理',
+            exportConfig: '設定をエクスポート',
+            importConfig: '設定をインポート',
+            importSuccess: '設定をインポートしました',
+            importError: '設定のインポートに失敗しました',
         },
         promptManager: {
             title: 'プロンプトプリセット',
@@ -222,6 +232,11 @@ export const translations: Record<Language, Translations> = {
             maxFileSizeLabel: 'Max File Size (Bytes)',
             maxFileSizeHint: 'Default: 1073741824 (1GB). Large files may crash the browser.',
             languageLabel: 'Display Language',
+            configManagement: 'Configuration Management',
+            exportConfig: 'Export Configuration',
+            importConfig: 'Import Configuration',
+            importSuccess: 'Configuration imported successfully',
+            importError: 'Failed to import configuration',
         },
         promptManager: {
             title: 'Prompt Presets',

@@ -5,7 +5,7 @@ import { useTranslation as getTranslation, type Language, type Translations } fr
 
 interface AppContextType {
     settings: AppSettings;
-    updateSettings: (newSettings: AppSettings) => void;
+    updateSettings: (newSettings: AppSettings, persist?: boolean) => void;
     logs: ProcessingLog[];
     addLog: (message: string, type?: 'info' | 'error' | 'success') => void;
     clearLogs: () => void;
@@ -33,10 +33,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [language, setLanguage] = useState<Language>(settings.language);
     const t = getTranslation(language);
 
-    const updateSettings = (newSettings: AppSettings) => {
+    const updateSettings = (newSettings: AppSettings, persist: boolean = true) => {
         setSettings(newSettings);
         setLanguage(newSettings.language);
-        StorageService.saveSettings(newSettings);
+        if (persist) {
+            StorageService.saveSettings(newSettings);
+        }
     };
 
     const updatePresets = (newPresets: PromptPreset[]) => {
