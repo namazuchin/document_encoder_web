@@ -7,6 +7,7 @@ import {
 import { useApp } from '../../contexts/AppContext';
 import { fetchYouTubeTitle, isValidYouTubeUrl } from '../../services/youtube';
 import { toaster } from '../../../src/main';
+import { getUploadHint } from '../../i18n/i18n';
 
 export interface VideoSource {
     type: 'file' | 'youtube';
@@ -23,10 +24,13 @@ interface Props {
 }
 
 export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, onModeChange }) => {
-    const { t } = useApp();
+    const { t, settings, language } = useApp();
     const [ytUrl, setYtUrl] = useState('');
     const [ytTitle, setYtTitle] = useState('');
     const [isFetchingTitle, setIsFetchingTitle] = useState(false);
+
+    // Generate dynamic upload hint based on settings
+    const uploadHint = getUploadHint(language, settings.maxFileSize);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -129,7 +133,7 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
                             <VStack gap={2}>
                                 <Icon as={Upload} boxSize={8} color="gray.400" />
                                 <Text fontSize="sm" color="gray.600">{t.dashboard.uploadPrompt}</Text>
-                                <Text fontSize="xs" color="gray.400">{t.dashboard.uploadHint}</Text>
+                                <Text fontSize="xs" color="gray.400">{uploadHint}</Text>
                             </VStack>
                         </label>
                     </Box>
