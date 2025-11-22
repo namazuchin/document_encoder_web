@@ -125,8 +125,10 @@ export const Settings: React.FC = () => {
                     <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.maxFileSizeLabel}</Text>
                     <Input
                         type="number"
-                        value={tempSettings.maxFileSize}
-                        onChange={(e) => handleFieldChange({ ...tempSettings, maxFileSize: parseInt(e.target.value) || 0 })}
+                        value={tempSettings.maxFileSize / (1024 * 1024 * 1024)}
+                        onChange={(e) => handleFieldChange({ ...tempSettings, maxFileSize: parseFloat(e.target.value) * 1024 * 1024 * 1024 || 0 })}
+                        step="0.1"
+                        min="0.1"
                     />
                     <Text fontSize="xs" color="gray.500" mt={1}>
                         {t.settings.maxFileSizeHint}
