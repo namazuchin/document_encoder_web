@@ -1,17 +1,27 @@
 import React from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
-import { Settings, List, ChevronDown } from 'lucide-react';
+import { Settings, List, ChevronDown, Languages } from 'lucide-react';
 import { Box, Flex, Heading, HStack, Icon, IconButton, Badge, Menu, Button, Image } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
 import { GEMINI_MODELS } from '../../types';
+import type { Language } from '../../i18n/i18n';
 
 export const AppLayout: React.FC = () => {
-    const { t, settings, updateSettings } = useApp();
+    const { t, settings, updateSettings, language } = useApp();
 
     const currentModelName = GEMINI_MODELS.find(m => m.id === settings.model)?.name || settings.model;
 
     const handleModelChange = (modelId: string) => {
         updateSettings({ ...settings, model: modelId }, false);
+    };
+
+    const handleLanguageChange = (newLanguage: Language) => {
+        updateSettings({ ...settings, language: newLanguage });
+    };
+
+    const languageLabels: Record<Language, string> = {
+        ja: '日本語',
+        en: 'English',
     };
 
     return (
@@ -64,6 +74,38 @@ export const AppLayout: React.FC = () => {
                                         {model.name}
                                     </Menu.Item>
                                 ))}
+                            </Menu.Content>
+                        </Menu.Positioner>
+                    </Menu.Root>
+                    <Menu.Root>
+                        <Menu.Trigger asChild>
+                            <IconButton
+                                aria-label={t.layout.languageTooltip}
+                                variant="ghost"
+                                rounded="full"
+                                color="gray.600"
+                                _hover={{ bg: 'gray.100' }}
+                                title={t.layout.languageTooltip}
+                            >
+                                <Languages size={20} />
+                            </IconButton>
+                        </Menu.Trigger>
+                        <Menu.Positioner>
+                            <Menu.Content zIndex={10}>
+                                <Menu.Item
+                                    value="ja"
+                                    onClick={() => handleLanguageChange('ja')}
+                                    fontWeight={language === 'ja' ? 'bold' : 'normal'}
+                                >
+                                    {languageLabels.ja}
+                                </Menu.Item>
+                                <Menu.Item
+                                    value="en"
+                                    onClick={() => handleLanguageChange('en')}
+                                    fontWeight={language === 'en' ? 'bold' : 'normal'}
+                                >
+                                    {languageLabels.en}
+                                </Menu.Item>
                             </Menu.Content>
                         </Menu.Positioner>
                     </Menu.Root>

@@ -4,34 +4,53 @@
  */
 
 export interface ScreenshotPlaceholder {
-    /** プレースホルダー全文 (例: "[Screenshot: 01:23s]") */
+    /** プレースホルダー全文 (例: "[Screenshot: 01:23s]" または "[Screenshot: 01:23s | 100,200,300,400]") */
     placeholder: string;
     /** タイムスタンプ文字列 (例: "01:23" または "83.5") */
     timestampStr: string;
     /** 秒数に変換されたタイムスタンプ */
     seconds: number;
+    /** クロップ情報 (ymin, xmin, ymax, xmax) - 0-1000 scale */
+    crop?: {
+        ymin: number;
+        xmin: number;
+        ymax: number;
+        xmax: number;
+    };
 }
 
 /**
- * Markdown内の [Screenshot: XX:XXs] 形式のプレースホルダーを解析
+ * Markdown内の [Screenshot: XX:XXs] または [Screenshot: XX:XXs | ymin,xmin,ymax,xmax] 形式のプレースホルダーを解析
  * @param markdown 解析対象のMarkdownテキスト
  * @returns 検出されたプレースホルダー情報の配列
  */
 export function parseScreenshotPlaceholders(markdown: string): ScreenshotPlaceholder[] {
-    // [Screenshot: XX:XX(s)] または [Screenshot: XX.XX(s)] の形式に対応
-    const regex = /\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?\]/gi;
+    // [Screenshot: XX:XX(s)] または [Screenshot: XX.XX(s)] または [Screenshot: XX:XXs | ymin,xmin,ymax,xmax] の形式に対応
+    // Group 1: Timestamp
+    // Group 2: Optional coordinates (e.g., "100,200,300,400")
+    const regex = /\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?(?:\s*\|\s*(\d+,\d+,\d+,\d+))?\]/gi;
     const placeholders: ScreenshotPlaceholder[] = [];
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(markdown)) !== null) {
         const placeholder = match[0];
         const timestampStr = match[1];
+        const coordsStr = match[2];
         const seconds = parseTimestampToSeconds(timestampStr);
+
+        let crop: { ymin: number; xmin: number; ymax: number; xmax: number } | undefined;
+        if (coordsStr) {
+            const [ymin, xmin, ymax, xmax] = coordsStr.split(',').map(Number);
+            if (!isNaN(ymin) && !isNaN(xmin) && !isNaN(ymax) && !isNaN(xmax)) {
+                crop = { ymin, xmin, ymax, xmax };
+            }
+        }
 
         placeholders.push({
             placeholder,
             timestampStr,
-            seconds
+            seconds,
+            crop
         });
     }
 
@@ -95,21 +114,67 @@ export function formatTimestampToFilename(seconds: number, fps: number = 30): st
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
-    
+
     // 小数部分からフレーム番号を計算
     const fractionalPart = seconds - totalSeconds;
     const frame = Math.floor(fractionalPart * fps) % fps;
-    
+
     return `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}${secs.toString().padStart(2, '0')}${frame.toString().padStart(2, '0')}`;
+}
+
+/**
+ * ファイル名から拡張子を除去
+ * @param filename ファイル名
+ * @returns 拡張子を除いたファイル名
+ */
+export function removeFileExtension(filename: string): string {
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1 || lastDotIndex === 0) {
+        return filename;
+    }
+    return filename.substring(0, lastDotIndex);
+}
+
+/**
+ * ファイル名として使えない文字をサニタイズ
+ * - 半角スペースを _ に置換
+ * - ファイルシステムで禁止されている文字（/ \ : * ? " < > |）を _ に置換
+ * @param filename サニタイズするファイル名
+ * @returns サニタイズされたファイル名
+ */
+export function sanitizeFilename(filename: string): string {
+    return filename
+        .replace(/\s/g, '_')  // 半角スペースを _ に置換
+        .replace(/[/\\:*?"<>|]/g, '_');  // ファイル名として使えない文字を _ に置換
+}
+
+/**
+ * スクリーンショットのファイル名を生成
+ * @param videoFilename 元の動画ファイル名
+ * @param seconds タイムスタンプ（秒）
+ * @param fps フレームレート（デフォルト: 30）
+ * @returns サニタイズされたスクリーンショットファイル名
+ */
+export function generateScreenshotFilename(
+    videoFilename: string,
+    seconds: number,
+    fps: number = 30
+): string {
+    const nameWithoutExt = removeFileExtension(videoFilename);
+    const sanitized = sanitizeFilename(nameWithoutExt);
+    const timestamp = formatTimestampToFilename(seconds, fps);
+    return `${sanitized}_${timestamp}.jpg`;
 }
 
 /**
  * スクリーンショット頻度に基づいたプロンプト指示文を生成
  * @param frequency スクリーンショット頻度 ('minimal' | 'moderate' | 'detailed')
+ * @param cropEnabled クロップ（切り抜き）を有効にするかどうか
  * @returns Geminiに追加するプロンプト指示文
  */
 export function buildScreenshotPromptInstruction(
-    frequency: 'minimal' | 'moderate' | 'detailed'
+    frequency: 'minimal' | 'moderate' | 'detailed',
+    cropEnabled: boolean = false
 ): string {
     const baseInstruction = `\n\nIMPORTANT: When describing`;
 
@@ -130,5 +195,16 @@ export function buildScreenshotPromptInstruction(
 
     const config = frequencyTexts[frequency];
 
-    return `${baseInstruction}${config.what}, please include screenshot references using this exact format: [Screenshot: XX:XXs] where XX:XX is the timestamp in MM:SS format (e.g., [Screenshot: 00:14s], [Screenshot: 01:23s]). ${config.usage}`;
+    let formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs] where XX:XX is the timestamp in MM:SS format.`;
+
+    if (cropEnabled) {
+        formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs | ymin,xmin,ymax,xmax].
+        - XX:XX is the timestamp in MM:SS format.
+        - ymin,xmin,ymax,xmax are the bounding box coordinates in 0-1000 scale (relative to the video frame).
+        - ymin is top, xmin is left, ymax is bottom, xmax is right.
+        - If you want to capture the whole screen, omit the coordinates: [Screenshot: XX:XXs].
+        - Example: [Screenshot: 01:23s | 100,200,500,600] to crop a specific region.`;
+    }
+
+    return `${baseInstruction}${config.what}, ${formatInstruction} ${config.usage}`;
 }

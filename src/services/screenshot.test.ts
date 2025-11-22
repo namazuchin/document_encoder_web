@@ -3,7 +3,11 @@ import {
     parseTimestampToSeconds,
     parseScreenshotPlaceholders,
     replaceScreenshotsInMarkdown,
-    buildScreenshotPromptInstruction
+    buildScreenshotPromptInstruction,
+    formatTimestampToFilename,
+    removeFileExtension,
+    sanitizeFilename,
+    generateScreenshotFilename
 } from './screenshot';
 
 describe('screenshot service', () => {
@@ -132,6 +136,116 @@ describe('screenshot service', () => {
 
             expect(instruction).toContain('visual elements, UI components');
             expect(instruction).toContain('frequently');
+        });
+    });
+
+    describe('formatTimestampToFilename', () => {
+        it('should format timestamps to hhmmssff format', () => {
+            expect(formatTimestampToFilename(0)).toBe('00000000');
+            expect(formatTimestampToFilename(83)).toBe('00012300');
+            expect(formatTimestampToFilename(3661)).toBe('01010100');
+        });
+
+        it('should handle decimal seconds and convert to frames', () => {
+            // 0.5 seconds at 30fps = frame 15
+            expect(formatTimestampToFilename(0.5, 30)).toBe('00000015');
+            // 1.5 seconds at 30fps = frame 15
+            expect(formatTimestampToFilename(1.5, 30)).toBe('00000115');
+        });
+
+        it('should handle custom FPS', () => {
+            // 0.5 seconds at 60fps = frame 30
+            expect(formatTimestampToFilename(0.5, 60)).toBe('00000030');
+            // 0.5 seconds at 24fps = frame 12
+            expect(formatTimestampToFilename(0.5, 24)).toBe('00000012');
+        });
+
+        it('should pad values correctly', () => {
+            // 1 hour, 2 minutes, 3 seconds, frame 4
+            expect(formatTimestampToFilename(3723.133, 30)).toBe('01020303');
+        });
+    });
+
+    describe('removeFileExtension', () => {
+        it('should remove common video extensions', () => {
+            expect(removeFileExtension('video.mp4')).toBe('video');
+            expect(removeFileExtension('movie.avi')).toBe('movie');
+            expect(removeFileExtension('clip.mov')).toBe('clip');
+        });
+
+        it('should handle multiple dots', () => {
+            expect(removeFileExtension('my.video.file.mp4')).toBe('my.video.file');
+        });
+
+        it('should return original if no extension', () => {
+            expect(removeFileExtension('noextension')).toBe('noextension');
+        });
+
+        it('should handle edge cases', () => {
+            expect(removeFileExtension('.hiddenfile')).toBe('.hiddenfile');
+            expect(removeFileExtension('file.')).toBe('file');
+        });
+    });
+
+    describe('sanitizeFilename', () => {
+        it('should replace spaces with underscores', () => {
+            expect(sanitizeFilename('my video file')).toBe('my_video_file');
+            expect(sanitizeFilename('test  file')).toBe('test__file');
+        });
+
+        it('should replace filesystem-forbidden characters', () => {
+            expect(sanitizeFilename('file/name')).toBe('file_name');
+            expect(sanitizeFilename('file\\name')).toBe('file_name');
+            expect(sanitizeFilename('file:name')).toBe('file_name');
+            expect(sanitizeFilename('file*name')).toBe('file_name');
+            expect(sanitizeFilename('file?name')).toBe('file_name');
+            expect(sanitizeFilename('file"name')).toBe('file_name');
+            expect(sanitizeFilename('file<name')).toBe('file_name');
+            expect(sanitizeFilename('file>name')).toBe('file_name');
+            expect(sanitizeFilename('file|name')).toBe('file_name');
+        });
+
+        it('should handle multiple problematic characters', () => {
+            expect(sanitizeFilename('my/video file:2024')).toBe('my_video_file_2024');
+            // test<file>?*.txt has 3 forbidden chars (<, >, ?, *) resulting in 3 underscores
+            expect(sanitizeFilename('test<file>?*.txt')).toBe('test_file___.txt');
+        });
+
+        it('should preserve safe characters', () => {
+            expect(sanitizeFilename('video-file_123')).toBe('video-file_123');
+            expect(sanitizeFilename('file.name.mp4')).toBe('file.name.mp4');
+        });
+    });
+
+    describe('generateScreenshotFilename', () => {
+        it('should generate filename without video extension', () => {
+            const result = generateScreenshotFilename('video.mp4', 83);
+            expect(result).toBe('video_00012300.jpg');
+        });
+
+        it('should sanitize spaces in filename', () => {
+            const result = generateScreenshotFilename('my video.mp4', 14);
+            expect(result).toBe('my_video_00001400.jpg');
+        });
+
+        it('should sanitize forbidden characters', () => {
+            const result = generateScreenshotFilename('my/video:file.avi', 0);
+            expect(result).toBe('my_video_file_00000000.jpg');
+        });
+
+        it('should handle complex filenames', () => {
+            const result = generateScreenshotFilename('test file (2024).mov', 3661);
+            expect(result).toBe('test_file_(2024)_01010100.jpg');
+        });
+
+        it('should include timestamp with frames', () => {
+            const result = generateScreenshotFilename('clip.mp4', 83.5, 30);
+            expect(result).toBe('clip_00012315.jpg');
+        });
+
+        it('should handle filenames with multiple extensions', () => {
+            const result = generateScreenshotFilename('my.video.file.mp4', 0);
+            expect(result).toBe('my.video.file_00000000.jpg');
         });
     });
 });

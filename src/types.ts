@@ -29,9 +29,12 @@ export interface ProcessingLog {
 export interface VideoSourceInfo {
     type: 'file' | 'youtube';
     // File source metadata (actual File object cannot be stored in localStorage)
-    fileName?: string;
-    fileSize?: number;
-    fileType?: string;
+    files?: {
+        name: string;
+        size: number;
+        type: string;
+    }[];
+    // Legacy single file support (optional, for migration if needed, or just remove)
     // YouTube source data
     youtubeUrl?: string;
     youtubeTitle?: string;
@@ -44,6 +47,7 @@ export interface DashboardState {
         prompt: string;
         language: 'ja' | 'en';
         extractScreenshots: boolean;
+        cropScreenshots?: boolean;
         screenshotFrequency: 'minimal' | 'moderate' | 'detailed';
     };
 }

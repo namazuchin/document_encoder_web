@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GEMINI_MODELS } from '../types';
 import { Box, Heading, VStack, Text, Input, NativeSelect, Button, HStack } from '@chakra-ui/react';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, Trash2 } from 'lucide-react';
 import { StorageService } from '../services/storage';
 
 export const Settings: React.FC = () => {
@@ -16,8 +16,8 @@ export const Settings: React.FC = () => {
         setHasChanges(true);
     };
 
-    const handleSave = () => {
-        updateSettings(tempSettings);
+    const handleSave = async () => {
+        await updateSettings(tempSettings);
         setHasChanges(false);
     };
 
@@ -26,8 +26,8 @@ export const Settings: React.FC = () => {
         setHasChanges(false);
     };
 
-    const handleExport = () => {
-        const configJson = StorageService.exportConfiguration();
+    const handleExport = async () => {
+        const configJson = await StorageService.exportConfiguration();
         const blob = new Blob([configJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -50,16 +50,16 @@ export const Settings: React.FC = () => {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const content = e.target?.result as string;
-            const result = StorageService.importConfiguration(content);
+            const result = await StorageService.importConfiguration(content);
 
             if (result.success) {
                 // Reload settings and presets from storage
-                const newSettings = StorageService.getSettings();
+                const newSettings = await StorageService.getSettings();
                 const newPresets = StorageService.getPresets();
                 setTempSettings(newSettings);
-                updateSettings(newSettings);
+                await updateSettings(newSettings);
                 updatePresets(newPresets);
                 setHasChanges(false);
 
@@ -72,6 +72,27 @@ export const Settings: React.FC = () => {
 
         // Reset file input
         event.target.value = '';
+    };
+
+    const handleClearStorage = async () => {
+        if (!window.confirm(t.settings.clearStorageConfirm)) {
+            return;
+        }
+
+        // Clear all localStorage data
+        StorageService.clearSettings();
+        StorageService.clearDashboardState();
+        localStorage.clear();
+
+        // Reset to default settings
+        const defaultSettings = await StorageService.getSettings();
+        const defaultPresets = StorageService.getPresets();
+        setTempSettings(defaultSettings);
+        await updateSettings(defaultSettings);
+        updatePresets(defaultPresets);
+        setHasChanges(false);
+
+        addLog(t.settings.clearStorageSuccess, 'success');
     };
 
     return (
@@ -125,8 +146,10 @@ export const Settings: React.FC = () => {
                     <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">{t.settings.maxFileSizeLabel}</Text>
                     <Input
                         type="number"
-                        value={tempSettings.maxFileSize}
-                        onChange={(e) => handleFieldChange({ ...tempSettings, maxFileSize: parseInt(e.target.value) || 0 })}
+                        value={tempSettings.maxFileSize / (1024 * 1024 * 1024)}
+                        onChange={(e) => handleFieldChange({ ...tempSettings, maxFileSize: parseFloat(e.target.value) * 1024 * 1024 * 1024 || 0 })}
+                        step="0.1"
+                        min="0.1"
                     />
                     <Text fontSize="xs" color="gray.500" mt={1}>
                         {t.settings.maxFileSizeHint}
@@ -182,6 +205,12 @@ export const Settings: React.FC = () => {
                             ? 'エクスポートにはAPIキーは含まれません。インポート時は既存のAPIキーが保持されます。'
                             : 'Export does not include API key. Existing API key will be preserved on import.'}
                     </Text>
+                    <Box mt={4}>
+                        <Button onClick={handleClearStorage} variant="outline" colorScheme="red" size="sm">
+                            <Trash2 size={16} />
+                            <Box as="span" ml={2}>{t.settings.clearStorage}</Box>
+                        </Button>
+                    </Box>
                 </Box>
             </VStack>
         </Box>

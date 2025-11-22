@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { VStack, Box, Text, NativeSelect, HStack, Switch, Textarea } from '@chakra-ui/react';
 import { Image as ImageIcon } from 'lucide-react';
+import { buildScreenshotPromptInstruction } from '../../services/screenshot';
 
 export interface PromptConfig {
     prompt: string;
     language: 'ja' | 'en';
     extractScreenshots: boolean;
+    cropScreenshots?: boolean;
     screenshotFrequency: 'minimal' | 'moderate' | 'detailed';
 }
 
@@ -43,6 +45,11 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
             onChange({ ...config, prompt: DEFAULT_PROMPTS[config.language] });
         }
     };
+
+    // システムプロンプトを生成（スクリーンショットが有効な場合のみ）
+    const systemPrompt = config.extractScreenshots && !isYoutube
+        ? buildScreenshotPromptInstruction(config.screenshotFrequency, config.cropScreenshots)
+        : '';
 
     return (
         <VStack gap={4} align="stretch">
@@ -93,6 +100,19 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
                             <Switch.Label fontSize="sm">{t.dashboard.embedScreenshots}</Switch.Label>
                         </Switch.Root>
 
+                        {config.extractScreenshots && (
+                            <Switch.Root
+                                checked={config.cropScreenshots}
+                                onCheckedChange={(e) => onChange({ ...config, cropScreenshots: e.checked })}
+                            >
+                                <Switch.HiddenInput />
+                                <Switch.Control>
+                                    <Switch.Thumb />
+                                </Switch.Control>
+                                <Switch.Label fontSize="sm">{t.dashboard.cropScreenshots}</Switch.Label>
+                            </Switch.Root>
+                        )}
+
                         <HStack gap={2} alignItems="center" flex="0 0 auto">
                             <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">{t.dashboard.frequency}:</Text>
                             <NativeSelect.Root size="sm" width="auto" disabled={!config.extractScreenshots}>
@@ -109,6 +129,28 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
                             </NativeSelect.Root>
                         </HStack>
                     </HStack>
+
+                    {config.extractScreenshots && systemPrompt && (
+                        <Box mt={4}>
+                            <Text mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                                {t.dashboard.systemPromptLabel}
+                            </Text>
+                            <Textarea
+                                value={systemPrompt}
+                                readOnly
+                                h="24"
+                                resize="none"
+                                bg="gray.50"
+                                fontSize="sm"
+                                color="gray.600"
+                                cursor="default"
+                                _focus={{ outline: 'none' }}
+                            />
+                            <Text fontSize="xs" color="gray.500" mt={1}>
+                                {t.dashboard.systemPromptHint}
+                            </Text>
+                        </Box>
+                    )}
                 </Box>
             )}
 
