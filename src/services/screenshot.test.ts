@@ -3,7 +3,8 @@ import {
     parseTimestampToSeconds,
     parseScreenshotPlaceholders,
     replaceScreenshotsInMarkdown,
-    buildScreenshotPromptInstruction
+    buildScreenshotPromptInstruction,
+    formatTimestampToFilename
 } from './screenshot';
 
 describe('screenshot service', () => {
@@ -132,6 +133,33 @@ describe('screenshot service', () => {
 
             expect(instruction).toContain('visual elements, UI components');
             expect(instruction).toContain('frequently');
+        });
+    });
+
+    describe('formatTimestampToFilename', () => {
+        it('should format timestamps to hhmmssff format', () => {
+            expect(formatTimestampToFilename(0)).toBe('00000000');
+            expect(formatTimestampToFilename(83)).toBe('00012300');
+            expect(formatTimestampToFilename(3661)).toBe('01010100');
+        });
+
+        it('should handle decimal seconds and convert to frames', () => {
+            // 0.5 seconds at 30fps = frame 15
+            expect(formatTimestampToFilename(0.5, 30)).toBe('00000015');
+            // 1.5 seconds at 30fps = frame 15
+            expect(formatTimestampToFilename(1.5, 30)).toBe('00000115');
+        });
+
+        it('should handle custom FPS', () => {
+            // 0.5 seconds at 60fps = frame 30
+            expect(formatTimestampToFilename(0.5, 60)).toBe('00000030');
+            // 0.5 seconds at 24fps = frame 12
+            expect(formatTimestampToFilename(0.5, 24)).toBe('00000012');
+        });
+
+        it('should pad values correctly', () => {
+            // 1 hour, 2 minutes, 3 seconds, frame 4
+            expect(formatTimestampToFilename(3723.133, 30)).toBe('01020303');
         });
     });
 });
