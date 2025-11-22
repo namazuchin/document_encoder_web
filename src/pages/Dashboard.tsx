@@ -228,7 +228,7 @@ Language: ${promptConfig.language === 'ja' ? 'Japanese' : 'English'}
                     if (!isSingleFile) {
                         // Tag placeholders with filename to preserve context through merge
                         // Replace [Screenshot: MM:SS] with [Screenshot: filename | MM:SS]
-                        // Also handle coordinates if present: [Screenshot: MM:SS | x,y,w,h] -> [Screenshot: filename | MM:SS | x,y,w,h]
+                        // Also handle coordinates if present: [Screenshot: MM:SS | ymin,xmin,ymax,xmax] -> [Screenshot: filename | MM:SS | ymin,xmin,ymax,xmax]
                         docContent = text.replace(/\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?(?:\s*\|\s*(\d+,\d+,\d+,\d+))?\]/gi, (_, timestamp, coords) => {
                             if (coords) {
                                 return `[Screenshot: ${file.name} | ${timestamp} | ${coords}]`;
@@ -256,7 +256,7 @@ ${docContent}
 Here are the summaries/documents generated from ${intermediateDocs.length} different videos.
 Please merge them into a single coherent document based on the user's original request.
 Preserve all important information and screenshot placeholders.
-IMPORTANT: Keep the screenshot placeholders in the format [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | x,y,w,h] exactly as they appear in the source text. Do not strip the filename or coordinates.
+IMPORTANT: Keep the screenshot placeholders in the format [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | ymin,xmin,ymax,xmax] exactly as they appear in the source text. Do not strip the filename or coordinates.
 
 User's Original Request:
 ${promptConfig.prompt}
@@ -282,7 +282,7 @@ ${intermediateDocs.join('\n\n---\n\n')}
                     for (let i = 0; i < totalFiles; i++) {
                         const file = videoSource.files[i];
 
-                        let targets: { timestamp: number; crop?: { x: number; y: number; w: number; h: number } }[] = [];
+                        let targets: { timestamp: number; crop?: { ymin: number; xmin: number; ymax: number; xmax: number } }[] = [];
 
                         if (isSingleFile) {
                             targets = parseScreenshotPlaceholders(finalMarkdown).map(p => ({
@@ -290,10 +290,10 @@ ${intermediateDocs.join('\n\n---\n\n')}
                                 crop: p.crop
                             }));
                         } else {
-                            // Regex for [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | x,y,w,h]
+                            // Regex for [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | ymin,xmin,ymax,xmax]
                             // Escape filename for regex
                             const escapedName = file.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            // Match [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | x,y,w,h]
+                            // Match [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | ymin,xmin,ymax,xmax]
                             const regex = new RegExp(`\\[Screenshot:\\s*${escapedName}\\s*\\|\\s*(\\d{1,2}:\\d{2}(?:\\.\\d+)?)\\s*(?:\\|\\s*(\\d+,\\d+,\\d+,\\d+))?\\s*\\]`, 'gi');
 
                             let match;
@@ -306,11 +306,11 @@ ${intermediateDocs.join('\n\n---\n\n')}
                                 const seconds = parseFloat(parts[1]);
                                 const timestamp = minutes * 60 + seconds;
 
-                                let crop: { x: number; y: number; w: number; h: number } | undefined;
+                                let crop: { ymin: number; xmin: number; ymax: number; xmax: number } | undefined;
                                 if (coordsStr) {
-                                    const [x, y, w, h] = coordsStr.split(',').map(Number);
-                                    if (!isNaN(x) && !isNaN(y) && !isNaN(w) && !isNaN(h)) {
-                                        crop = { x, y, w, h };
+                                    const [ymin, xmin, ymax, xmax] = coordsStr.split(',').map(Number);
+                                    if (!isNaN(ymin) && !isNaN(xmin) && !isNaN(ymax) && !isNaN(xmax)) {
+                                        crop = { ymin, xmin, ymax, xmax };
                                     }
                                 }
 
@@ -400,8 +400,10 @@ ${intermediateDocs.join('\n\n---\n\n')}
     const handleDownload = async () => {
         if (!resultMarkdown) return;
 
-        // 動画名を取得してzipファイル名に使用
+        // 動画名を取得してzipファイル名とMarkdownファイル名に使用
         let zipFileName = "document_package.zip";
+        let markdownFileName = "document.md";
+
         if (videoSource) {
             if (videoSource.type === 'file' && videoSource.files && videoSource.files.length > 0) {
                 // Use first file name or a generic name if multiple
@@ -410,17 +412,21 @@ ${intermediateDocs.join('\n\n---\n\n')}
                     const nameWithoutExt = removeFileExtension(fileName);
                     const sanitized = sanitizeFilename(nameWithoutExt);
                     zipFileName = `${sanitized}.zip`;
+                    markdownFileName = `${sanitized}.md`;
                 } else {
-                    zipFileName = `multi_video_documents_${new Date().toISOString().slice(0, 10)}.zip`;
+                    const baseName = `multi_video_documents_${new Date().toISOString().slice(0, 10)}`;
+                    zipFileName = `${baseName}.zip`;
+                    markdownFileName = `${baseName}.md`;
                 }
             } else if (videoSource.type === 'youtube' && videoSource.youtubeTitle) {
                 // YouTubeタイトルを使用（ファイル名に使えない文字を置換）
                 const sanitized = sanitizeFilename(videoSource.youtubeTitle.trim());
                 zipFileName = `${sanitized}.zip`;
+                markdownFileName = `${sanitized}.md`;
             }
         }
 
-        const zipBlob = await ArchiveService.createZip(resultMarkdown, extractedImages);
+        const zipBlob = await ArchiveService.createZip(resultMarkdown, extractedImages, markdownFileName);
         const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         a.href = url;

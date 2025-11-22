@@ -19,13 +19,18 @@ export class VideoProcessor {
         this.loaded = true;
     }
 
-    async getVideoDuration(file: File): Promise<number> {
+    async getVideoMetadata(file: File): Promise<{ duration: number; width: number; height: number }> {
         return new Promise((resolve, reject) => {
             const video = document.createElement('video');
             video.preload = 'metadata';
             video.onloadedmetadata = () => {
+                const metadata = {
+                    duration: video.duration,
+                    width: video.videoWidth,
+                    height: video.videoHeight
+                };
                 URL.revokeObjectURL(video.src);
-                resolve(video.duration);
+                resolve(metadata);
             };
             video.onerror = () => reject(new Error("Failed to load video metadata"));
             video.src = URL.createObjectURL(file);
@@ -34,10 +39,13 @@ export class VideoProcessor {
 
     async extractFrames(
         file: File,
-        targets: { timestamp: number; crop?: { x: number; y: number; w: number; h: number } }[],
+        targets: { timestamp: number; crop?: { ymin: number; xmin: number; ymax: number; xmax: number } }[],
         onProgress?: (percent: number) => void
     ): Promise<Blob[]> {
         if (!this.loaded) await this.load();
+
+        // Get video metadata for coordinate conversion
+        const { width, height } = await this.getVideoMetadata(file);
 
         const inputName = 'input.mp4';
         await this.ffmpeg.writeFile(inputName, await fetchFile(file));
@@ -57,8 +65,21 @@ export class VideoProcessor {
             ];
 
             if (crop) {
+                // Convert relative coordinates (0-1000) to pixels
+                // ymin, xmin, ymax, xmax -> x, y, w, h
+                const x = Math.round((crop.xmin / 1000) * width);
+                const y = Math.round((crop.ymin / 1000) * height);
+                const w = Math.round(((crop.xmax - crop.xmin) / 1000) * width);
+                const h = Math.round(((crop.ymax - crop.ymin) / 1000) * height);
+
+                // Ensure valid bounds
+                const safeX = Math.max(0, Math.min(x, width - 1));
+                const safeY = Math.max(0, Math.min(y, height - 1));
+                const safeW = Math.max(1, Math.min(w, width - safeX));
+                const safeH = Math.max(1, Math.min(h, height - safeY));
+
                 // crop=w:h:x:y
-                args.push('-vf', `crop=${crop.w}:${crop.h}:${crop.x}:${crop.y}`);
+                args.push('-vf', `crop=${safeW}:${safeH}:${safeX}:${safeY}`);
             }
 
             args.push(outputName);
