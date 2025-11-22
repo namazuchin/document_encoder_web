@@ -4,34 +4,53 @@
  */
 
 export interface ScreenshotPlaceholder {
-    /** プレースホルダー全文 (例: "[Screenshot: 01:23s]") */
+    /** プレースホルダー全文 (例: "[Screenshot: 01:23s]" または "[Screenshot: 01:23s | 10,20,300,200]") */
     placeholder: string;
     /** タイムスタンプ文字列 (例: "01:23" または "83.5") */
     timestampStr: string;
     /** 秒数に変換されたタイムスタンプ */
     seconds: number;
+    /** クロップ情報 (x, y, w, h) */
+    crop?: {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+    };
 }
 
 /**
- * Markdown内の [Screenshot: XX:XXs] 形式のプレースホルダーを解析
+ * Markdown内の [Screenshot: XX:XXs] または [Screenshot: XX:XXs | x,y,w,h] 形式のプレースホルダーを解析
  * @param markdown 解析対象のMarkdownテキスト
  * @returns 検出されたプレースホルダー情報の配列
  */
 export function parseScreenshotPlaceholders(markdown: string): ScreenshotPlaceholder[] {
-    // [Screenshot: XX:XX(s)] または [Screenshot: XX.XX(s)] の形式に対応
-    const regex = /\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?\]/gi;
+    // [Screenshot: XX:XX(s)] または [Screenshot: XX.XX(s)] または [Screenshot: XX:XXs | x,y,w,h] の形式に対応
+    // Group 1: Timestamp
+    // Group 2: Optional coordinates (e.g., "10,20,300,200")
+    const regex = /\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?(?:\s*\|\s*(\d+,\d+,\d+,\d+))?\]/gi;
     const placeholders: ScreenshotPlaceholder[] = [];
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(markdown)) !== null) {
         const placeholder = match[0];
         const timestampStr = match[1];
+        const coordsStr = match[2];
         const seconds = parseTimestampToSeconds(timestampStr);
+
+        let crop: { x: number; y: number; w: number; h: number } | undefined;
+        if (coordsStr) {
+            const [x, y, w, h] = coordsStr.split(',').map(Number);
+            if (!isNaN(x) && !isNaN(y) && !isNaN(w) && !isNaN(h)) {
+                crop = { x, y, w, h };
+            }
+        }
 
         placeholders.push({
             placeholder,
             timestampStr,
-            seconds
+            seconds,
+            crop
         });
     }
 
@@ -95,11 +114,11 @@ export function formatTimestampToFilename(seconds: number, fps: number = 30): st
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
-    
+
     // 小数部分からフレーム番号を計算
     const fractionalPart = seconds - totalSeconds;
     const frame = Math.floor(fractionalPart * fps) % fps;
-    
+
     return `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}${secs.toString().padStart(2, '0')}${frame.toString().padStart(2, '0')}`;
 }
 
@@ -150,10 +169,12 @@ export function generateScreenshotFilename(
 /**
  * スクリーンショット頻度に基づいたプロンプト指示文を生成
  * @param frequency スクリーンショット頻度 ('minimal' | 'moderate' | 'detailed')
+ * @param cropEnabled クロップ（切り抜き）を有効にするかどうか
  * @returns Geminiに追加するプロンプト指示文
  */
 export function buildScreenshotPromptInstruction(
-    frequency: 'minimal' | 'moderate' | 'detailed'
+    frequency: 'minimal' | 'moderate' | 'detailed',
+    cropEnabled: boolean = false
 ): string {
     const baseInstruction = `\n\nIMPORTANT: When describing`;
 
@@ -174,5 +195,15 @@ export function buildScreenshotPromptInstruction(
 
     const config = frequencyTexts[frequency];
 
-    return `${baseInstruction}${config.what}, please include screenshot references using this exact format: [Screenshot: XX:XXs] where XX:XX is the timestamp in MM:SS format (e.g., [Screenshot: 00:14s], [Screenshot: 01:23s]). ${config.usage}`;
+    let formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs] where XX:XX is the timestamp in MM:SS format.`;
+
+    if (cropEnabled) {
+        formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs | x,y,w,h].
+        - XX:XX is the timestamp in MM:SS format.
+        - x,y,w,h are the coordinates and dimensions of the region to crop (in pixels, assuming 1920x1080 resolution if unknown, or relative to the visual context).
+        - If you want to capture the whole screen, omit the coordinates: [Screenshot: XX:XXs].
+        - Example: [Screenshot: 01:23s | 100,200,500,300] to crop a specific region.`;
+    }
+
+    return `${baseInstruction}${config.what}, ${formatInstruction} ${config.usage}`;
 }

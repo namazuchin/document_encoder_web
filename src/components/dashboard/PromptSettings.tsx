@@ -8,6 +8,7 @@ export interface PromptConfig {
     prompt: string;
     language: 'ja' | 'en';
     extractScreenshots: boolean;
+    cropScreenshots?: boolean;
     screenshotFrequency: 'minimal' | 'moderate' | 'detailed';
 }
 
@@ -47,7 +48,7 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
 
     // システムプロンプトを生成（スクリーンショットが有効な場合のみ）
     const systemPrompt = config.extractScreenshots && !isYoutube
-        ? buildScreenshotPromptInstruction(config.screenshotFrequency)
+        ? buildScreenshotPromptInstruction(config.screenshotFrequency, config.cropScreenshots)
         : '';
 
     return (
@@ -98,6 +99,19 @@ export const PromptSettings: React.FC<Props> = ({ config, onChange, isYoutube })
                             </Switch.Control>
                             <Switch.Label fontSize="sm">{t.dashboard.embedScreenshots}</Switch.Label>
                         </Switch.Root>
+
+                        {config.extractScreenshots && (
+                            <Switch.Root
+                                checked={config.cropScreenshots}
+                                onCheckedChange={(e) => onChange({ ...config, cropScreenshots: e.checked })}
+                            >
+                                <Switch.HiddenInput />
+                                <Switch.Control>
+                                    <Switch.Thumb />
+                                </Switch.Control>
+                                <Switch.Label fontSize="sm">{t.dashboard.cropScreenshots}</Switch.Label>
+                            </Switch.Root>
+                        )}
 
                         <HStack gap={2} alignItems="center" flex="0 0 auto">
                             <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">{t.dashboard.frequency}:</Text>

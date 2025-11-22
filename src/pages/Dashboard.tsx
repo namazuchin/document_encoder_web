@@ -218,7 +218,7 @@ Language: ${promptConfig.language === 'ja' ? 'Japanese' : 'English'}
 
                     const shouldBuildScreenshotInstruction = promptConfig.extractScreenshots;
                     const screenshotInstruction = shouldBuildScreenshotInstruction
-                        ? buildScreenshotPromptInstruction(promptConfig.screenshotFrequency)
+                        ? buildScreenshotPromptInstruction(promptConfig.screenshotFrequency, promptConfig.cropScreenshots)
                         : undefined;
 
                     const text = await gemini.generateContent(settings.model, promptToUse, fileUri, "video/mp4", screenshotInstruction);
@@ -228,7 +228,11 @@ Language: ${promptConfig.language === 'ja' ? 'Japanese' : 'English'}
                     if (!isSingleFile) {
                         // Tag placeholders with filename to preserve context through merge
                         // Replace [Screenshot: MM:SS] with [Screenshot: filename | MM:SS]
-                        docContent = text.replace(/\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?\]/gi, (_, timestamp) => {
+                        // Also handle coordinates if present: [Screenshot: MM:SS | x,y,w,h] -> [Screenshot: filename | MM:SS | x,y,w,h]
+                        docContent = text.replace(/\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?(?:\s*\|\s*(\d+,\d+,\d+,\d+))?\]/gi, (_, timestamp, coords) => {
+                            if (coords) {
+                                return `[Screenshot: ${file.name} | ${timestamp} | ${coords}]`;
+                            }
                             return `[Screenshot: ${file.name} | ${timestamp}]`;
                         });
 
@@ -252,7 +256,7 @@ ${docContent}
 Here are the summaries/documents generated from ${intermediateDocs.length} different videos.
 Please merge them into a single coherent document based on the user's original request.
 Preserve all important information and screenshot placeholders.
-IMPORTANT: Keep the screenshot placeholders in the format [Screenshot: filename | MM:SS] exactly as they appear in the source text. Do not strip the filename.
+IMPORTANT: Keep the screenshot placeholders in the format [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | x,y,w,h] exactly as they appear in the source text. Do not strip the filename or coordinates.
 
 User's Original Request:
 ${promptConfig.prompt}
@@ -278,54 +282,62 @@ ${intermediateDocs.join('\n\n---\n\n')}
                     for (let i = 0; i < totalFiles; i++) {
                         const file = videoSource.files[i];
 
-                        let timestamps: number[] = [];
+                        let targets: { timestamp: number; crop?: { x: number; y: number; w: number; h: number } }[] = [];
 
                         if (isSingleFile) {
-                            timestamps = parseScreenshotPlaceholders(finalMarkdown).map(p => p.seconds);
+                            targets = parseScreenshotPlaceholders(finalMarkdown).map(p => ({
+                                timestamp: p.seconds,
+                                crop: p.crop
+                            }));
                         } else {
-                            // Regex for [Screenshot: filename | MM:SS]
+                            // Regex for [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | x,y,w,h]
                             // Escape filename for regex
                             const escapedName = file.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            // Match [Screenshot: filename | MM:SS]
-                            const regex = new RegExp(`\\[Screenshot:\\s*${escapedName}\\s*\\|\\s*(\\d{1,2}:\\d{2}(?:\\.\\d+)?)\\s*\\]`, 'gi');
+                            // Match [Screenshot: filename | MM:SS] or [Screenshot: filename | MM:SS | x,y,w,h]
+                            const regex = new RegExp(`\\[Screenshot:\\s*${escapedName}\\s*\\|\\s*(\\d{1,2}:\\d{2}(?:\\.\\d+)?)\\s*(?:\\|\\s*(\\d+,\\d+,\\d+,\\d+))?\\s*\\]`, 'gi');
 
                             let match;
                             while ((match = regex.exec(finalMarkdown)) !== null) {
-                                // Use the helper to parse timestamp string
-                                // We need to import parseTimestampToSeconds or duplicate logic?
-                                // It's exported from screenshot.ts, but I need to make sure it's imported.
-                                // It is NOT imported in the original file content I saw.
-                                // I should check imports.
-                                // Actually, `parseScreenshotPlaceholders` uses it internally.
-                                // I can just parse "MM:SS" manually here since it's simple.
                                 const tsStr = match[1];
+                                const coordsStr = match[2];
+
                                 const parts = tsStr.split(':');
                                 const minutes = parseInt(parts[0], 10);
                                 const seconds = parseFloat(parts[1]);
-                                timestamps.push(minutes * 60 + seconds);
+                                const timestamp = minutes * 60 + seconds;
+
+                                let crop: { x: number; y: number; w: number; h: number } | undefined;
+                                if (coordsStr) {
+                                    const [x, y, w, h] = coordsStr.split(',').map(Number);
+                                    if (!isNaN(x) && !isNaN(y) && !isNaN(w) && !isNaN(h)) {
+                                        crop = { x, y, w, h };
+                                    }
+                                }
+
+                                targets.push({ timestamp, crop });
                             }
                         }
 
-                        if (timestamps.length > 0) {
+                        if (targets.length > 0) {
                             setStatusMessage(`Extracting screenshots for ${file.name}...`);
-                            addLog(`Extracting ${timestamps.length} frames from ${file.name}...`);
+                            addLog(`Extracting ${targets.length} frames from ${file.name}...`);
 
-                            const blobs = await videoProcessor.current.extractFrames(file, timestamps, () => {
+                            const blobs = await videoProcessor.current.extractFrames(file, targets, () => {
                                 // Progress logic could be added here if needed
                             });
 
                             // Map to image objects
                             const newImages = blobs.map((blob, idx) => ({
                                 blob,
-                                name: generateScreenshotFilename(file.name, timestamps[idx])
+                                name: generateScreenshotFilename(file.name, targets[idx].timestamp)
                             }));
 
                             allImages = [...allImages, ...newImages];
 
                             // Replace in Markdown
                             if (isSingleFile) {
-                                const imageMapping = timestamps.map((ts, idx) => ({
-                                    seconds: ts,
+                                const imageMapping = targets.map((t, idx) => ({
+                                    seconds: t.timestamp,
                                     filename: newImages[idx].name
                                 }));
                                 finalMarkdown = replaceScreenshotsInMarkdown(finalMarkdown, imageMapping);
@@ -333,13 +345,13 @@ ${intermediateDocs.join('\n\n---\n\n')}
                                 // Custom replace for multi-file
                                 // Create a map for quick lookup: timestamp (approx) -> filename
                                 const imageMap = new Map<number, string>();
-                                timestamps.forEach((ts, idx) => {
-                                    imageMap.set(ts, newImages[idx].name);
+                                targets.forEach((t, idx) => {
+                                    imageMap.set(t.timestamp, newImages[idx].name);
                                 });
 
                                 // Replace all placeholders for this file in one go
                                 const escapedName = file.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                                const replaceRegex = new RegExp(`\\[Screenshot:\\s*${escapedName}\\s*\\|\\s*(\\d{1,2}:\\d{2}(?:\\.\\d+)?)\\s*\\]`, 'gi');
+                                const replaceRegex = new RegExp(`\\[Screenshot:\\s*${escapedName}\\s*\\|\\s*(\\d{1,2}:\\d{2}(?:\\.\\d+)?)\\s*(?:\\|\\s*(\\d+,\\d+,\\d+,\\d+))?\\s*\\]`, 'gi');
 
                                 finalMarkdown = finalMarkdown.replace(replaceRegex, (match, tsStr) => {
                                     const parts = tsStr.split(':');
@@ -348,10 +360,6 @@ ${intermediateDocs.join('\n\n---\n\n')}
                                     const sec = m * 60 + s;
 
                                     // Find if this second is in our map (with tolerance)
-                                    // Since we just created the map from the same timestamps, exact match might fail due to float precision if we recalculated.
-                                    // But here we are parsing the string again.
-                                    // Let's find the closest timestamp in the map.
-
                                     for (const [ts, filename] of imageMap.entries()) {
                                         if (Math.abs(ts - sec) < 0.5) {
                                             return `![${tsStr}](${filename})`;

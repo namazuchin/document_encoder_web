@@ -34,7 +34,7 @@ export class VideoProcessor {
 
     async extractFrames(
         file: File,
-        timestamps: number[],
+        targets: { timestamp: number; crop?: { x: number; y: number; w: number; h: number } }[],
         onProgress?: (percent: number) => void
     ): Promise<Blob[]> {
         if (!this.loaded) await this.load();
@@ -43,20 +43,28 @@ export class VideoProcessor {
         await this.ffmpeg.writeFile(inputName, await fetchFile(file));
 
         const screenshots: Blob[] = [];
-        const total = timestamps.length;
+        const total = targets.length;
 
         for (let i = 0; i < total; i++) {
-            const time = timestamps[i];
+            const { timestamp, crop } = targets[i];
             const outputName = `frame_${i}.png`;
 
-            // -ss before -i is faster (seek)
-            await this.ffmpeg.exec([
-                '-ss', time.toString(),
+            const args = [
+                '-ss', timestamp.toString(),
                 '-i', inputName,
                 '-frames:v', '1',
                 '-q:v', '2',  // 品質設定 (1-31, 2は高品質)
-                outputName
-            ]);
+            ];
+
+            if (crop) {
+                // crop=w:h:x:y
+                args.push('-vf', `crop=${crop.w}:${crop.h}:${crop.x}:${crop.y}`);
+            }
+
+            args.push(outputName);
+
+            // -ss before -i is faster (seek)
+            await this.ffmpeg.exec(args);
 
             const data = await this.ffmpeg.readFile(outputName) as Uint8Array;
             screenshots.push(new Blob([new Uint8Array(data)], { type: 'image/png' }));
