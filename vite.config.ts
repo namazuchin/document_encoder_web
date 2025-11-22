@@ -14,6 +14,17 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'chakra-vendor': ['@chakra-ui/react', '@emotion/react', '@emotion/styled'],
+          'ffmpeg-vendor': ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
