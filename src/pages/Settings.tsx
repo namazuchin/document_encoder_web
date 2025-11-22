@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { GEMINI_MODELS } from '../types';
 import { Box, Heading, VStack, Text, Input, NativeSelect, Button, HStack } from '@chakra-ui/react';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, Trash2 } from 'lucide-react';
 import { StorageService } from '../services/storage';
 
 export const Settings: React.FC = () => {
@@ -72,6 +72,27 @@ export const Settings: React.FC = () => {
 
         // Reset file input
         event.target.value = '';
+    };
+
+    const handleClearStorage = () => {
+        if (!window.confirm(t.settings.clearStorageConfirm)) {
+            return;
+        }
+
+        // Clear all localStorage data
+        StorageService.clearSettings();
+        StorageService.clearDashboardState();
+        localStorage.clear();
+
+        // Reset to default settings
+        const defaultSettings = StorageService.getSettings();
+        const defaultPresets = StorageService.getPresets();
+        setTempSettings(defaultSettings);
+        updateSettings(defaultSettings);
+        updatePresets(defaultPresets);
+        setHasChanges(false);
+
+        addLog(t.settings.clearStorageSuccess, 'success');
     };
 
     return (
@@ -184,6 +205,12 @@ export const Settings: React.FC = () => {
                             ? 'エクスポートにはAPIキーは含まれません。インポート時は既存のAPIキーが保持されます。'
                             : 'Export does not include API key. Existing API key will be preserved on import.'}
                     </Text>
+                    <Box mt={4}>
+                        <Button onClick={handleClearStorage} variant="outline" colorScheme="red" size="sm">
+                            <Trash2 size={16} />
+                            <Box as="span" ml={2}>{t.settings.clearStorage}</Box>
+                        </Button>
+                    </Box>
                 </Box>
             </VStack>
         </Box>
