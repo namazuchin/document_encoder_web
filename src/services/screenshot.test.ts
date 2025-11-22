@@ -4,7 +4,10 @@ import {
     parseScreenshotPlaceholders,
     replaceScreenshotsInMarkdown,
     buildScreenshotPromptInstruction,
-    formatTimestampToFilename
+    formatTimestampToFilename,
+    removeFileExtension,
+    sanitizeFilename,
+    generateScreenshotFilename
 } from './screenshot';
 
 describe('screenshot service', () => {
@@ -160,6 +163,89 @@ describe('screenshot service', () => {
         it('should pad values correctly', () => {
             // 1 hour, 2 minutes, 3 seconds, frame 4
             expect(formatTimestampToFilename(3723.133, 30)).toBe('01020303');
+        });
+    });
+
+    describe('removeFileExtension', () => {
+        it('should remove common video extensions', () => {
+            expect(removeFileExtension('video.mp4')).toBe('video');
+            expect(removeFileExtension('movie.avi')).toBe('movie');
+            expect(removeFileExtension('clip.mov')).toBe('clip');
+        });
+
+        it('should handle multiple dots', () => {
+            expect(removeFileExtension('my.video.file.mp4')).toBe('my.video.file');
+        });
+
+        it('should return original if no extension', () => {
+            expect(removeFileExtension('noextension')).toBe('noextension');
+        });
+
+        it('should handle edge cases', () => {
+            expect(removeFileExtension('.hiddenfile')).toBe('.hiddenfile');
+            expect(removeFileExtension('file.')).toBe('file');
+        });
+    });
+
+    describe('sanitizeFilename', () => {
+        it('should replace spaces with underscores', () => {
+            expect(sanitizeFilename('my video file')).toBe('my_video_file');
+            expect(sanitizeFilename('test  file')).toBe('test__file');
+        });
+
+        it('should replace filesystem-forbidden characters', () => {
+            expect(sanitizeFilename('file/name')).toBe('file_name');
+            expect(sanitizeFilename('file\\name')).toBe('file_name');
+            expect(sanitizeFilename('file:name')).toBe('file_name');
+            expect(sanitizeFilename('file*name')).toBe('file_name');
+            expect(sanitizeFilename('file?name')).toBe('file_name');
+            expect(sanitizeFilename('file"name')).toBe('file_name');
+            expect(sanitizeFilename('file<name')).toBe('file_name');
+            expect(sanitizeFilename('file>name')).toBe('file_name');
+            expect(sanitizeFilename('file|name')).toBe('file_name');
+        });
+
+        it('should handle multiple problematic characters', () => {
+            expect(sanitizeFilename('my/video file:2024')).toBe('my_video_file_2024');
+            // test<file>?*.txt has 3 forbidden chars (<, >, ?, *) resulting in 3 underscores
+            expect(sanitizeFilename('test<file>?*.txt')).toBe('test_file___.txt');
+        });
+
+        it('should preserve safe characters', () => {
+            expect(sanitizeFilename('video-file_123')).toBe('video-file_123');
+            expect(sanitizeFilename('file.name.mp4')).toBe('file.name.mp4');
+        });
+    });
+
+    describe('generateScreenshotFilename', () => {
+        it('should generate filename without video extension', () => {
+            const result = generateScreenshotFilename('video.mp4', 83);
+            expect(result).toBe('video_00012300.jpg');
+        });
+
+        it('should sanitize spaces in filename', () => {
+            const result = generateScreenshotFilename('my video.mp4', 14);
+            expect(result).toBe('my_video_00001400.jpg');
+        });
+
+        it('should sanitize forbidden characters', () => {
+            const result = generateScreenshotFilename('my/video:file.avi', 0);
+            expect(result).toBe('my_video_file_00000000.jpg');
+        });
+
+        it('should handle complex filenames', () => {
+            const result = generateScreenshotFilename('test file (2024).mov', 3661);
+            expect(result).toBe('test_file_(2024)_01010100.jpg');
+        });
+
+        it('should include timestamp with frames', () => {
+            const result = generateScreenshotFilename('clip.mp4', 83.5, 30);
+            expect(result).toBe('clip_00012315.jpg');
+        });
+
+        it('should handle filenames with multiple extensions', () => {
+            const result = generateScreenshotFilename('my.video.file.mp4', 0);
+            expect(result).toBe('my.video.file_00000000.jpg');
         });
     });
 });
