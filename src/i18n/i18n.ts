@@ -19,6 +19,7 @@ export interface Translations {
         appTitle: string;
         settingsTooltip: string;
         promptPresetsTooltip: string;
+        languageTooltip: string;
     };
     dashboard: {
         videoSourceTitle: string;
@@ -120,6 +121,7 @@ export const translations: Record<Language, Translations> = {
             appTitle: 'Document Encoder Web',
             settingsTooltip: '設定',
             promptPresetsTooltip: 'プロンプトプリセット',
+            languageTooltip: '言語',
         },
         dashboard: {
             videoSourceTitle: '1. 動画ソース',
@@ -219,6 +221,7 @@ export const translations: Record<Language, Translations> = {
             appTitle: 'Document Encoder Web',
             settingsTooltip: 'Settings',
             promptPresetsTooltip: 'Prompt Presets',
+            languageTooltip: 'Language',
         },
         dashboard: {
             videoSourceTitle: '1. Video Source',
