@@ -55,6 +55,7 @@ export interface Translations {
         youtubeScreenshotNotice: string;
         systemPromptLabel: string;
         systemPromptHint: string;
+        videoUploadNotice: string;
     };
     settings: {
         title: string;
@@ -147,6 +148,7 @@ export const translations: Record<Language, Translations> = {
             youtubeScreenshotNotice: 'YouTubeを選択した場合、スクリーンショットの埋め込みはできません。',
             systemPromptLabel: 'システムプロンプト',
             systemPromptHint: 'このプロンプトはGeminiに自動的に送信されます',
+            videoUploadNotice: '※ 動画ファイルはGeminiのみにアップロードされます',
         },
         settings: {
             title: '設定',
@@ -237,6 +239,7 @@ export const translations: Record<Language, Translations> = {
             youtubeScreenshotNotice: 'Screenshot embedding is unavailable when using a YouTube source.',
             systemPromptLabel: 'System Prompt',
             systemPromptHint: 'This prompt will be automatically sent to Gemini',
+            videoUploadNotice: '* Video files are uploaded to Gemini only',
         },
         settings: {
             title: 'Settings',

@@ -107,6 +107,9 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
                         </IconButton>
                     </Flex>
                 )}
+                <Text fontSize="xs" color="gray.500" mt={2}>
+                    {t.dashboard.videoUploadNotice}
+                </Text>
             </Tabs.Content>
 
             <Tabs.Content value="youtube" px={0} pt={4}>
