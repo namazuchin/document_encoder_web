@@ -98,5 +98,46 @@ export const StorageService = {
         } catch (error) {
             return { success: false, message: 'Failed to parse configuration file' };
         }
+    },
+
+    // Dashboard state persistence
+    getDashboardState(): import('../types').DashboardState {
+        const stored = localStorage.getItem(STORAGE_KEY + '_dashboard');
+        if (!stored) {
+            // Return default state
+            return {
+                videoSource: null,
+                videoSourceMode: 'file',
+                promptConfig: {
+                    prompt: '',
+                    language: 'ja',
+                    extractScreenshots: true,
+                    screenshotFrequency: 'moderate'
+                }
+            };
+        }
+        try {
+            return JSON.parse(stored);
+        } catch {
+            // Return default state on parse error
+            return {
+                videoSource: null,
+                videoSourceMode: 'file',
+                promptConfig: {
+                    prompt: '',
+                    language: 'ja',
+                    extractScreenshots: true,
+                    screenshotFrequency: 'moderate'
+                }
+            };
+        }
+    },
+
+    saveDashboardState(state: import('../types').DashboardState) {
+        localStorage.setItem(STORAGE_KEY + '_dashboard', JSON.stringify(state));
+    },
+
+    clearDashboardState() {
+        localStorage.removeItem(STORAGE_KEY + '_dashboard');
     }
 };

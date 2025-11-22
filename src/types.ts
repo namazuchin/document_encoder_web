@@ -24,3 +24,26 @@ export interface ProcessingLog {
     message: string;
     type: 'info' | 'error' | 'success';
 }
+
+// Dashboard state types for persistence
+export interface VideoSourceInfo {
+    type: 'file' | 'youtube';
+    // File source metadata (actual File object cannot be stored in localStorage)
+    fileName?: string;
+    fileSize?: number;
+    fileType?: string;
+    // YouTube source data
+    youtubeUrl?: string;
+    youtubeTitle?: string;
+}
+
+export interface DashboardState {
+    videoSource: VideoSourceInfo | null;
+    videoSourceMode: 'file' | 'youtube';
+    promptConfig: {
+        prompt: string;
+        language: 'ja' | 'en';
+        extractScreenshots: boolean;
+        screenshotFrequency: 'minimal' | 'moderate' | 'detailed';
+    };
+}
