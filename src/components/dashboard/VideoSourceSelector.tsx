@@ -8,7 +8,7 @@ import { useApp } from '../../contexts/AppContext';
 
 export interface VideoSource {
     type: 'file' | 'youtube';
-    file?: File;
+    files?: File[];
     youtubeUrl?: string;
     youtubeTitle?: string;
 }
@@ -26,8 +26,25 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
     const [ytTitle, setYtTitle] = useState('');
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            onChange({ type: 'file', file: e.target.files[0] });
+        if (e.target.files && e.target.files.length > 0) {
+            const newFiles = Array.from(e.target.files);
+            // If there are existing files, append new ones, otherwise just set new ones
+            // Actually, usually file input replaces selection unless we manage it manually.
+            // Let's just replace for now to keep it simple, or append if we want accumulator behavior.
+            // Given the UI, replacing is standard for a single input, but we might want to allow adding more.
+            // For now, let's replace to match standard behavior, user can select multiple at once.
+            onChange({ type: 'file', files: newFiles });
+        }
+    };
+
+    const handleRemoveFile = (index: number) => {
+        if (value?.type === 'file' && value.files) {
+            const newFiles = value.files.filter((_, i) => i !== index);
+            if (newFiles.length === 0) {
+                onChange(null);
+            } else {
+                onChange({ ...value, files: newFiles });
+            }
         }
     };
 
@@ -61,6 +78,7 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
                             id="video-upload"
                             display="none"
                             accept="video/*"
+                            multiple
                             onChange={handleFileChange}
                         />
                         <label htmlFor="video-upload" style={{ cursor: 'pointer', width: '100%', display: 'block' }}>
@@ -72,40 +90,76 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
                         </label>
                     </Box>
                 ) : (
-                    <Flex
-                        align="center"
-                        justify="space-between"
-                        p={3}
-                        bg="gray.50"
-                        rounded="md"
-                        borderWidth="1px"
-                        borderColor="gray.200"
-                    >
-                        <Flex align="center" gap={3} overflow="hidden">
-                            <Box p={2} bg="blue.100" rounded="md" color="blue.600">
-                                <Icon as={Upload} boxSize={5} />
-                            </Box>
-                            <Box minW={0}>
-                                <Text fontSize="sm" fontWeight="medium" color="gray.900" truncate>
-                                    {value.file?.name}
-                                </Text>
-                                <Text fontSize="xs" color="gray.500">
-                                    {(value.file!.size / (1024 * 1024)).toFixed(2)} MB
-                                </Text>
-                            </Box>
-                        </Flex>
-                        <IconButton
-                            aria-label="Remove video"
-                            size="sm"
-                            variant="ghost"
-                            color="gray.400"
-                            _hover={{ color: 'red.500', bg: 'red.50' }}
-                            onClick={() => onChange(null)}
-                            rounded="full"
+                    <VStack align="stretch" gap={2}>
+                        {value.files?.map((file, index) => (
+                            <Flex
+                                key={`${file.name}-${index}`}
+                                align="center"
+                                justify="space-between"
+                                p={3}
+                                bg="gray.50"
+                                rounded="md"
+                                borderWidth="1px"
+                                borderColor="gray.200"
+                            >
+                                <Flex align="center" gap={3} overflow="hidden">
+                                    <Box p={2} bg="blue.100" rounded="md" color="blue.600">
+                                        <Icon as={Upload} boxSize={5} />
+                                    </Box>
+                                    <Box minW={0}>
+                                        <Text fontSize="sm" fontWeight="medium" color="gray.900" truncate>
+                                            {file.name}
+                                        </Text>
+                                        <Text fontSize="xs" color="gray.500">
+                                            {(file.size / (1024 * 1024)).toFixed(2)} MB
+                                        </Text>
+                                    </Box>
+                                </Flex>
+                                <IconButton
+                                    aria-label="Remove video"
+                                    size="sm"
+                                    variant="ghost"
+                                    color="gray.400"
+                                    _hover={{ color: 'red.500', bg: 'red.50' }}
+                                    onClick={() => handleRemoveFile(index)}
+                                    rounded="full"
+                                >
+                                    <X size={18} />
+                                </IconButton>
+                            </Flex>
+                        ))}
+                        <Box
+                            borderWidth={2}
+                            borderStyle="dashed"
+                            borderColor="gray.200"
+                            rounded="lg"
+                            p={4}
+                            textAlign="center"
+                            _hover={{ borderColor: 'blue.500' }}
+                            transition="all 0.2s"
+                            mt={2}
                         >
-                            <X size={18} />
-                        </IconButton>
-                    </Flex>
+                            <Input
+                                type="file"
+                                id="video-upload-more"
+                                display="none"
+                                accept="video/*"
+                                multiple
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files.length > 0) {
+                                        const newFiles = Array.from(e.target.files);
+                                        onChange({
+                                            type: 'file',
+                                            files: [...(value.files || []), ...newFiles]
+                                        });
+                                    }
+                                }}
+                            />
+                            <label htmlFor="video-upload-more" style={{ cursor: 'pointer', width: '100%', display: 'block' }}>
+                                <Text fontSize="sm" color="blue.500">Add more videos</Text>
+                            </label>
+                        </Box>
+                    </VStack>
                 )}
                 <Text fontSize="xs" color="gray.500" mt={2}>
                     {t.dashboard.videoUploadNotice}

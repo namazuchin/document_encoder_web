@@ -4,12 +4,12 @@
  */
 
 const DB_NAME = 'DocumentEncoderDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Increment version for schema change if needed, though we are just changing value type
 const STORE_NAME = 'videoFiles';
 const VIDEO_KEY = 'currentVideo';
 
-interface StoredVideoFile {
-    file: File;
+interface StoredVideoFiles {
+    files: File[];
     timestamp: number;
 }
 
@@ -40,17 +40,17 @@ const initDB = (): Promise<IDBDatabase> => {
 };
 
 /**
- * Save a video file to IndexedDB
+ * Save video files to IndexedDB
  */
-const saveVideoFile = async (file: File): Promise<void> => {
+const saveVideoFiles = async (files: File[]): Promise<void> => {
     const db = await initDB();
 
     return new Promise((resolve, reject) => {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
 
-        const data: StoredVideoFile = {
-            file,
+        const data: StoredVideoFiles = {
+            files,
             timestamp: Date.now()
         };
 
@@ -61,7 +61,7 @@ const saveVideoFile = async (file: File): Promise<void> => {
         };
 
         request.onerror = () => {
-            reject(new Error('Failed to save video file to IndexedDB'));
+            reject(new Error('Failed to save video files to IndexedDB'));
         };
 
         transaction.oncomplete = () => {
@@ -71,9 +71,9 @@ const saveVideoFile = async (file: File): Promise<void> => {
 };
 
 /**
- * Get the stored video file from IndexedDB
+ * Get the stored video files from IndexedDB
  */
-const getVideoFile = async (): Promise<File | null> => {
+const getVideoFiles = async (): Promise<File[]> => {
     const db = await initDB();
 
     return new Promise((resolve, reject) => {
@@ -82,12 +82,24 @@ const getVideoFile = async (): Promise<File | null> => {
         const request = store.get(VIDEO_KEY);
 
         request.onsuccess = () => {
-            const data = request.result as StoredVideoFile | undefined;
-            resolve(data?.file || null);
+            const data = request.result as StoredVideoFiles | undefined;
+            // Handle both new array format and potential legacy single file format if DB wasn't cleared
+            if (data) {
+                if (Array.isArray(data.files)) {
+                    resolve(data.files);
+                } else if ((data as any).file) {
+                    // Legacy support: wrap single file in array
+                    resolve([(data as any).file]);
+                } else {
+                    resolve([]);
+                }
+            } else {
+                resolve([]);
+            }
         };
 
         request.onerror = () => {
-            reject(new Error('Failed to get video file from IndexedDB'));
+            reject(new Error('Failed to get video files from IndexedDB'));
         };
 
         transaction.oncomplete = () => {
@@ -97,9 +109,9 @@ const getVideoFile = async (): Promise<File | null> => {
 };
 
 /**
- * Delete the stored video file from IndexedDB
+ * Delete the stored video files from IndexedDB
  */
-const deleteVideoFile = async (): Promise<void> => {
+const deleteVideoFiles = async (): Promise<void> => {
     const db = await initDB();
 
     return new Promise((resolve, reject) => {
@@ -112,7 +124,7 @@ const deleteVideoFile = async (): Promise<void> => {
         };
 
         request.onerror = () => {
-            reject(new Error('Failed to delete video file from IndexedDB'));
+            reject(new Error('Failed to delete video files from IndexedDB'));
         };
 
         transaction.oncomplete = () => {
@@ -122,12 +134,12 @@ const deleteVideoFile = async (): Promise<void> => {
 };
 
 /**
- * Check if a video file exists in IndexedDB
+ * Check if video files exist in IndexedDB
  */
-const hasVideoFile = async (): Promise<boolean> => {
+const hasVideoFiles = async (): Promise<boolean> => {
     try {
-        const file = await getVideoFile();
-        return file !== null;
+        const files = await getVideoFiles();
+        return files.length > 0;
     } catch {
         return false;
     }
@@ -135,8 +147,8 @@ const hasVideoFile = async (): Promise<boolean> => {
 
 export const IndexedDBService = {
     initDB,
-    saveVideoFile,
-    getVideoFile,
-    deleteVideoFile,
-    hasVideoFile
+    saveVideoFiles,
+    getVideoFiles,
+    deleteVideoFiles,
+    hasVideoFiles
 };
