@@ -71,6 +71,9 @@ export interface Translations {
         importConfig: string;
         importSuccess: string;
         importError: string;
+        clearStorage: string;
+        clearStorageConfirm: string;
+        clearStorageSuccess: string;
     };
     promptManager: {
         title: string;
@@ -164,6 +167,9 @@ export const translations: Record<Language, Translations> = {
             importConfig: '設定をインポート',
             importSuccess: '設定をインポートしました',
             importError: '設定のインポートに失敗しました',
+            clearStorage: 'ローカルストレージをクリア',
+            clearStorageConfirm: '本当にすべての設定をクリアしますか？この操作は元に戻せません。',
+            clearStorageSuccess: 'ローカルストレージをクリアしました',
         },
         promptManager: {
             title: 'プロンプトプリセット',
@@ -255,6 +261,9 @@ export const translations: Record<Language, Translations> = {
             importConfig: 'Import Configuration',
             importSuccess: 'Configuration imported successfully',
             importError: 'Failed to import configuration',
+            clearStorage: 'Clear Local Storage',
+            clearStorageConfirm: 'Are you sure you want to clear all settings? This action cannot be undone.',
+            clearStorageSuccess: 'Local storage cleared successfully',
         },
         promptManager: {
             title: 'Prompt Presets',
