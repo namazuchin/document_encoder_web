@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Grid, VStack, Box, Heading, Text } from '@chakra-ui/react';
 import { VideoSourceSelector, type VideoSource } from '../components/dashboard/VideoSourceSelector';
-import { PromptSettings, type PromptConfig } from '../components/dashboard/PromptSettings';
+import { PromptSettings } from '../components/dashboard/PromptSettings';
 import { ActionPanel } from '../components/dashboard/ActionPanel';
 import { ProgressSection } from '../components/dashboard/ProgressSection';
 import { LogSection } from '../components/dashboard/LogSection';
@@ -10,26 +10,147 @@ import { useApp } from '../contexts/AppContext';
 import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
+import { IndexedDBService } from '../services/indexedDB';
 import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, formatTimestampToFilename } from '../services/screenshot';
 
 export const Dashboard: React.FC = () => {
-    const { settings, logs, addLog, clearLogs, isProcessing, setIsProcessing, progress, setProgress, statusMessage, setStatusMessage, t } = useApp();
+    const {
+        settings,
+        logs,
+        addLog,
+        clearLogs,
+        isProcessing,
+        setIsProcessing,
+        progress,
+        setProgress,
+        statusMessage,
+        setStatusMessage,
+        t,
+        dashboardState,
+        updateDashboardState
+    } = useApp();
 
-    const [videoSource, setVideoSource] = useState<VideoSource | null>(null);
-    const [promptConfig, setPromptConfig] = useState<PromptConfig>({
-        prompt: '',
-        language: 'ja',
-        extractScreenshots: true,
-        screenshotFrequency: 'moderate'
-    });
+    // Local state for processing results (not persisted)
     const [resultMarkdown, setResultMarkdown] = useState('');
     const [extractedImages, setExtractedImages] = useState<{ blob: Blob; name: string }[]>([]);
-    const [videoSourceMode, setVideoSourceMode] = useState<'file' | 'youtube'>('file');
+    const [loadedFile, setLoadedFile] = useState<File | null>(null);
+
+    // Load file from IndexedDB on mount
+    useEffect(() => {
+        const loadFileFromIndexedDB = async () => {
+            try {
+                if (dashboardState.videoSource?.type === 'file') {
+                    const file = await IndexedDBService.getVideoFile();
+                    setLoadedFile(file);
+                }
+            } catch (error) {
+                console.error('Failed to load file from IndexedDB:', error);
+            }
+        };
+
+        loadFileFromIndexedDB();
+    }, [dashboardState.videoSource]);
+
+    // Convert persisted VideoSourceInfo to VideoSource (with File from IndexedDB if available)
+    const videoSource = useMemo<VideoSource | null>(() => {
+        if (!dashboardState.videoSource) return null;
+
+        if (dashboardState.videoSource.type === 'youtube') {
+            return {
+                type: 'youtube',
+                youtubeUrl: dashboardState.videoSource.youtubeUrl,
+                youtubeTitle: dashboardState.videoSource.youtubeTitle
+            };
+        }
+
+        // For file type, use the file loaded from IndexedDB
+        if (dashboardState.videoSource.type === 'file' && loadedFile) {
+            return {
+                type: 'file',
+                file: loadedFile
+            };
+        }
+
+        return null;
+    }, [dashboardState.videoSource, loadedFile]);
+
+    const promptConfig = dashboardState.promptConfig;
+    const videoSourceMode = dashboardState.videoSourceMode;
 
     const activeSourceType = videoSource?.type ?? videoSourceMode;
     const isYoutubeSelected = activeSourceType === 'youtube';
 
     const videoProcessor = useRef(new VideoProcessor());
+
+    // Handlers for updating dashboard state
+    const handleVideoSourceChange = async (source: VideoSource | null) => {
+        if (!source) {
+            // Clear both state and IndexedDB
+            updateDashboardState({
+                ...dashboardState,
+                videoSource: null
+            });
+            try {
+                await IndexedDBService.deleteVideoFile();
+                setLoadedFile(null);
+            } catch (error) {
+                console.error('Failed to delete file from IndexedDB:', error);
+            }
+            return;
+        }
+
+        if (source.type === 'youtube') {
+            updateDashboardState({
+                ...dashboardState,
+                videoSource: {
+                    type: 'youtube',
+                    youtubeUrl: source.youtubeUrl,
+                    youtubeTitle: source.youtubeTitle
+                }
+            });
+        } else if (source.type === 'file' && source.file) {
+            // Save file to IndexedDB
+            try {
+                await IndexedDBService.saveVideoFile(source.file);
+                setLoadedFile(source.file);
+                updateDashboardState({
+                    ...dashboardState,
+                    videoSource: {
+                        type: 'file',
+                        fileName: source.file.name,
+                        fileSize: source.file.size,
+                        fileType: source.file.type
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to save file to IndexedDB:', error);
+                // Still update state with metadata even if IndexedDB fails
+                updateDashboardState({
+                    ...dashboardState,
+                    videoSource: {
+                        type: 'file',
+                        fileName: source.file.name,
+                        fileSize: source.file.size,
+                        fileType: source.file.type
+                    }
+                });
+            }
+        }
+    };
+
+    const handlePromptConfigChange = (config: typeof promptConfig) => {
+        updateDashboardState({
+            ...dashboardState,
+            promptConfig: config
+        });
+    };
+
+    const handleVideoSourceModeChange = (mode: 'file' | 'youtube') => {
+        updateDashboardState({
+            ...dashboardState,
+            videoSourceMode: mode
+        });
+    };
 
     const handleGenerate = async () => {
         if (!videoSource) return;
@@ -182,9 +303,9 @@ export const Dashboard: React.FC = () => {
                     <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
                     <VideoSourceSelector
                         value={videoSource}
-                        onChange={setVideoSource}
+                        onChange={handleVideoSourceChange}
                         mode={videoSourceMode}
-                        onModeChange={setVideoSourceMode}
+                        onModeChange={handleVideoSourceModeChange}
                     />
                     {isYoutubeSelected && (
                         <Text
@@ -206,7 +327,7 @@ export const Dashboard: React.FC = () => {
                     <Heading size="md" mb={4}>{t.dashboard.promptSettingsTitle}</Heading>
                     <PromptSettings
                         config={promptConfig}
-                        onChange={setPromptConfig}
+                        onChange={handlePromptConfigChange}
                         isYoutube={isYoutubeSelected}
                     />
                 </Box>
