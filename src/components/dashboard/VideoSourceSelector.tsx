@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Upload, Youtube, X } from 'lucide-react';
 import {
     Box, Tabs, Input, VStack, Icon, Text, Flex, IconButton,
-    Button
+    Button, Spinner
 } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
+import { fetchYouTubeTitle, isValidYouTubeUrl } from '../../services/youtube';
+import { toaster } from '../../../src/main';
 
 export interface VideoSource {
     type: 'file' | 'youtube';
@@ -24,6 +26,7 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
     const { t } = useApp();
     const [ytUrl, setYtUrl] = useState('');
     const [ytTitle, setYtTitle] = useState('');
+    const [isFetchingTitle, setIsFetchingTitle] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -45,6 +48,47 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
             } else {
                 onChange({ ...value, files: newFiles });
             }
+        }
+    };
+
+    const handleFetchTitle = async () => {
+        if (!ytUrl) {
+            toaster.create({
+                title: t.messages.invalidYoutubeUrl,
+                type: 'error',
+                duration: 3000,
+            });
+            return;
+        }
+
+        if (!isValidYouTubeUrl(ytUrl)) {
+            toaster.create({
+                title: t.messages.invalidYoutubeUrl,
+                type: 'error',
+                duration: 3000,
+            });
+            return;
+        }
+
+        setIsFetchingTitle(true);
+        try {
+            const title = await fetchYouTubeTitle(ytUrl);
+            setYtTitle(title);
+            toaster.create({
+                title: t.messages.titleFetchSuccess,
+                type: 'success',
+                duration: 2000,
+            });
+        } catch (error) {
+            console.error('Failed to fetch YouTube title:', error);
+            toaster.create({
+                title: t.messages.titleFetchError,
+                description: error instanceof Error ? error.message : 'Unknown error',
+                type: 'error',
+                duration: 4000,
+            });
+        } finally {
+            setIsFetchingTitle(false);
         }
     };
 
@@ -170,11 +214,29 @@ export const VideoSourceSelector: React.FC<Props> = ({ value, onChange, mode, on
                 <VStack gap={4} align="stretch">
                     <Box>
                         <Text mb={2} fontSize="sm" fontWeight="medium">{t.dashboard.youtubeUrl}</Text>
-                        <Input
-                            placeholder="https://www.youtube.com/watch?v=..."
-                            value={ytUrl}
-                            onChange={(e) => setYtUrl(e.target.value)}
-                        />
+                        <Flex gap={2}>
+                            <Input
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                value={ytUrl}
+                                onChange={(e) => setYtUrl(e.target.value)}
+                                flex={1}
+                            />
+                            <Button
+                                onClick={handleFetchTitle}
+                                disabled={!ytUrl || isFetchingTitle}
+                                colorScheme="gray"
+                                minW="120px"
+                            >
+                                {isFetchingTitle ? (
+                                    <>
+                                        <Spinner size="sm" mr={2} />
+                                        {t.dashboard.fetchingTitle}
+                                    </>
+                                ) : (
+                                    t.dashboard.fetchTitle
+                                )}
+                            </Button>
+                        </Flex>
                     </Box>
                     <Box>
                         <Text mb={2} fontSize="sm" fontWeight="medium">{t.dashboard.videoTitle}</Text>

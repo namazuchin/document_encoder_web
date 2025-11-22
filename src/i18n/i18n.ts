@@ -31,6 +31,8 @@ export interface Translations {
         youtubeUrl: string;
         videoTitle: string;
         setVideo: string;
+        fetchTitle: string;
+        fetchingTitle: string;
         preset: string;
         selectPreset: string;
         defaultPreset: string;
@@ -92,6 +94,9 @@ export interface Translations {
         noPlaceholders: string;
         failed: string;
         done: string;
+        titleFetchSuccess: string;
+        titleFetchError: string;
+        invalidYoutubeUrl: string;
     };
 }
 
@@ -127,6 +132,8 @@ export const translations: Record<Language, Translations> = {
             youtubeUrl: 'YouTube URL',
             videoTitle: '動画タイトル',
             setVideo: '動画を設定',
+            fetchTitle: 'タイトル取得',
+            fetchingTitle: '取得中...',
             preset: 'プリセット',
             selectPreset: 'プリセットを選択...',
             defaultPreset: 'デフォルト (手動)',
@@ -188,6 +195,9 @@ export const translations: Record<Language, Translations> = {
             noPlaceholders: '生成されたドキュメント内にスクリーンショットプレースホルダーが見つかりませんでした。',
             failed: '失敗',
             done: '完了',
+            titleFetchSuccess: 'タイトルを取得しました',
+            titleFetchError: 'タイトルの取得に失敗しました',
+            invalidYoutubeUrl: '無効なYouTube URLです',
         },
     },
     en: {
@@ -221,6 +231,8 @@ export const translations: Record<Language, Translations> = {
             youtubeUrl: 'YouTube URL',
             videoTitle: 'Video Title',
             setVideo: 'Set Video',
+            fetchTitle: 'Fetch Title',
+            fetchingTitle: 'Fetching...',
             preset: 'Preset',
             selectPreset: 'Select a preset...',
             defaultPreset: 'Default (Manual)',
@@ -282,6 +294,9 @@ export const translations: Record<Language, Translations> = {
             noPlaceholders: 'No screenshot placeholders found in the generated document.',
             failed: 'Failed',
             done: 'Done',
+            titleFetchSuccess: 'Title fetched successfully',
+            titleFetchError: 'Failed to fetch title',
+            invalidYoutubeUrl: 'Invalid YouTube URL',
         },
     },
 };
