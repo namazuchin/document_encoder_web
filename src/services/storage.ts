@@ -1,7 +1,10 @@
 import { type AppSettings, type PromptPreset, GEMINI_MODELS } from '../types';
+import { EncryptionService } from './encryption';
 
 const STORAGE_KEY = 'doc_encoder_settings';
 const DEFAULT_PRESETS_INITIALIZED_KEY = 'doc_encoder_default_presets_initialized';
+const ENCRYPTION_VERSION_KEY = 'doc_encoder_encryption_version';
+const CURRENT_ENCRYPTION_VERSION = 1;
 
 const DEFAULT_SETTINGS: AppSettings = {
     apiKey: '',
@@ -86,18 +89,67 @@ const DEFAULT_PRESETS: PromptPreset[] = [
 ];
 
 export const StorageService = {
-    getSettings(): AppSettings {
+    async getSettings(): Promise<AppSettings> {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (!stored) return DEFAULT_SETTINGS;
         try {
-            return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+            const parsed = JSON.parse(stored);
+
+            // Decrypt API key if it exists and is encrypted
+            if (parsed.apiKey && EncryptionService.isEncrypted(parsed.apiKey)) {
+                try {
+                    parsed.apiKey = await EncryptionService.decrypt(parsed.apiKey);
+                } catch (error) {
+                    console.error('Failed to decrypt API key:', error);
+                    // If decryption fails, clear the corrupted API key
+                    parsed.apiKey = '';
+                }
+            } else if (parsed.apiKey) {
+                // Migrate unencrypted API key to encrypted format
+                await this.migrateToEncrypted(parsed.apiKey);
+                parsed.apiKey = await EncryptionService.decrypt(
+                    (JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')).apiKey || ''
+                );
+            }
+
+            return { ...DEFAULT_SETTINGS, ...parsed };
         } catch {
             return DEFAULT_SETTINGS;
         }
     },
 
-    saveSettings(settings: AppSettings) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    async saveSettings(settings: AppSettings): Promise<void> {
+        const settingsToSave = { ...settings };
+
+        // Encrypt API key before saving
+        if (settingsToSave.apiKey) {
+            settingsToSave.apiKey = await EncryptionService.encrypt(settingsToSave.apiKey);
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settingsToSave));
+
+        // Mark encryption version
+        localStorage.setItem(ENCRYPTION_VERSION_KEY, CURRENT_ENCRYPTION_VERSION.toString());
+    },
+
+    /**
+     * Migrate existing plaintext API key to encrypted format
+     */
+    async migrateToEncrypted(plaintextApiKey: string): Promise<void> {
+        if (!plaintextApiKey) return;
+
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return;
+
+        try {
+            const settings = JSON.parse(stored);
+            settings.apiKey = await EncryptionService.encrypt(plaintextApiKey);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            localStorage.setItem(ENCRYPTION_VERSION_KEY, CURRENT_ENCRYPTION_VERSION.toString());
+            console.info('API key migrated to encrypted format');
+        } catch (error) {
+            console.error('Failed to migrate API key:', error);
+        }
     },
 
     clearSettings() {
@@ -131,8 +183,8 @@ export const StorageService = {
         localStorage.setItem(STORAGE_KEY + '_presets', JSON.stringify(presets));
     },
 
-    exportConfiguration(): string {
-        const settings = this.getSettings();
+    async exportConfiguration(): Promise<string> {
+        const settings = await this.getSettings();
         const presets = this.getPresets();
 
         // Exclude API key from export
@@ -148,7 +200,7 @@ export const StorageService = {
         return JSON.stringify(config, null, 2);
     },
 
-    importConfiguration(jsonString: string): { success: boolean; message?: string } {
+    async importConfiguration(jsonString: string): Promise<{ success: boolean; message?: string }> {
         try {
             const data = JSON.parse(jsonString);
 
@@ -158,12 +210,12 @@ export const StorageService = {
 
             // Import settings (preserve existing API key)
             if (data.settings) {
-                const currentSettings = this.getSettings();
+                const currentSettings = await this.getSettings();
                 const newSettings = {
                     ...data.settings,
                     apiKey: currentSettings.apiKey // Keep existing API key
                 };
-                this.saveSettings(newSettings);
+                await this.saveSettings(newSettings);
             }
 
             // Import presets (merge strategy)

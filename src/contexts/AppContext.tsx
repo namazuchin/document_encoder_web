@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
-import { type AppSettings, type ProcessingLog, type PromptPreset, type DashboardState } from '../types';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { type AppSettings, type ProcessingLog, type PromptPreset, type DashboardState, GEMINI_MODELS } from '../types';
 import { StorageService } from '../services/storage';
 import { useTranslation as getTranslation, type Language, type Translations } from '../i18n/i18n';
 
 interface AppContextType {
     settings: AppSettings;
-    updateSettings: (newSettings: AppSettings, persist?: boolean) => void;
+    updateSettings: (newSettings: AppSettings, persist?: boolean) => Promise<void>;
     logs: ProcessingLog[];
     addLog: (message: string, type?: 'info' | 'error' | 'success') => void;
     clearLogs: () => void;
@@ -21,26 +21,51 @@ interface AppContextType {
     t: Translations;
     dashboardState: DashboardState;
     updateDashboardState: (state: DashboardState) => void;
+    isLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const DEFAULT_SETTINGS: AppSettings = {
+    apiKey: '',
+    model: GEMINI_MODELS[0].id,
+    maxFileSize: 1024 * 1024 * 1024,
+    language: 'ja',
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [settings, setSettings] = useState<AppSettings>(StorageService.getSettings());
+    const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+    const [isLoading, setIsLoading] = useState(true);
     const [logs, setLogs] = useState<ProcessingLog[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState("");
     const [presets, setPresets] = useState<PromptPreset[]>(StorageService.getPresets());
-    const [language, setLanguage] = useState<Language>(settings.language);
+    const [language, setLanguage] = useState<Language>(DEFAULT_SETTINGS.language);
     const [dashboardState, setDashboardState] = useState<DashboardState>(StorageService.getDashboardState());
     const t = getTranslation(language);
 
-    const updateSettings = (newSettings: AppSettings, persist: boolean = true) => {
+    // Load settings on mount (async)
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const loadedSettings = await StorageService.getSettings();
+                setSettings(loadedSettings);
+                setLanguage(loadedSettings.language);
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadSettings();
+    }, []);
+
+    const updateSettings = async (newSettings: AppSettings, persist: boolean = true) => {
         setSettings(newSettings);
         setLanguage(newSettings.language);
         if (persist) {
-            StorageService.saveSettings(newSettings);
+            await StorageService.saveSettings(newSettings);
         }
     };
 
@@ -78,7 +103,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             language,
             t,
             dashboardState,
-            updateDashboardState
+            updateDashboardState,
+            isLoading
         }}>
             {children}
         </AppContext.Provider>
