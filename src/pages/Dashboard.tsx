@@ -11,7 +11,7 @@ import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
 import { IndexedDBService } from '../services/indexedDB';
-import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, formatTimestampToFilename } from '../services/screenshot';
+import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, generateScreenshotFilename } from '../services/screenshot';
 
 import { IntroModal } from '../components/IntroModal';
 
@@ -317,7 +317,7 @@ ${intermediateDocs.join('\n\n---\n\n')}
                             // Map to image objects
                             const newImages = blobs.map((blob, idx) => ({
                                 blob,
-                                name: `${file.name}_${formatTimestampToFilename(timestamps[idx])}.jpg`
+                                name: generateScreenshotFilename(file.name, timestamps[idx])
                             }));
 
                             allImages = [...allImages, ...newImages];

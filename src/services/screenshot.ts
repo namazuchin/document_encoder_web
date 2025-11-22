@@ -104,6 +104,50 @@ export function formatTimestampToFilename(seconds: number, fps: number = 30): st
 }
 
 /**
+ * ファイル名から拡張子を除去
+ * @param filename ファイル名
+ * @returns 拡張子を除いたファイル名
+ */
+export function removeFileExtension(filename: string): string {
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1 || lastDotIndex === 0) {
+        return filename;
+    }
+    return filename.substring(0, lastDotIndex);
+}
+
+/**
+ * ファイル名として使えない文字をサニタイズ
+ * - 半角スペースを _ に置換
+ * - ファイルシステムで禁止されている文字（/ \ : * ? " < > |）を _ に置換
+ * @param filename サニタイズするファイル名
+ * @returns サニタイズされたファイル名
+ */
+export function sanitizeFilename(filename: string): string {
+    return filename
+        .replace(/\s/g, '_')  // 半角スペースを _ に置換
+        .replace(/[/\\:*?"<>|]/g, '_');  // ファイル名として使えない文字を _ に置換
+}
+
+/**
+ * スクリーンショットのファイル名を生成
+ * @param videoFilename 元の動画ファイル名
+ * @param seconds タイムスタンプ（秒）
+ * @param fps フレームレート（デフォルト: 30）
+ * @returns サニタイズされたスクリーンショットファイル名
+ */
+export function generateScreenshotFilename(
+    videoFilename: string,
+    seconds: number,
+    fps: number = 30
+): string {
+    const nameWithoutExt = removeFileExtension(videoFilename);
+    const sanitized = sanitizeFilename(nameWithoutExt);
+    const timestamp = formatTimestampToFilename(seconds, fps);
+    return `${sanitized}_${timestamp}.jpg`;
+}
+
+/**
  * スクリーンショット頻度に基づいたプロンプト指示文を生成
  * @param frequency スクリーンショット頻度 ('minimal' | 'moderate' | 'detailed')
  * @returns Geminiに追加するプロンプト指示文
