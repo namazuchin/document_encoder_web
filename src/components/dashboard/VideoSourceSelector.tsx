@@ -5,7 +5,7 @@ import {
     Button
 } from '@chakra-ui/react';
 import { useApp } from '../../contexts/AppContext';
-import { VideoSource } from '../../types';
+import type { VideoSource } from '../../types';
 
 interface Props {
     value: VideoSource | null;

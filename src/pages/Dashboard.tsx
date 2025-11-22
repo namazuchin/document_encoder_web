@@ -11,7 +11,6 @@ import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
 import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, formatTimestampToFilename } from '../services/screenshot';
-import { type VideoSource } from '../types';
 
 export const Dashboard: React.FC = () => {
     const { 
