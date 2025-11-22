@@ -13,6 +13,8 @@ import { ArchiveService } from '../services/archive';
 import { IndexedDBService } from '../services/indexedDB';
 import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, formatTimestampToFilename } from '../services/screenshot';
 
+import { IntroModal } from '../components/IntroModal';
+
 export const Dashboard: React.FC = () => {
     const {
         settings,
@@ -418,60 +420,63 @@ ${intermediateDocs.join('\n\n---\n\n')}
     };
 
     return (
-        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
-            <VStack gap={6} p={1} align="stretch">
-                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
-                    <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
-                    <VideoSourceSelector
-                        value={videoSource}
-                        onChange={handleVideoSourceChange}
-                        mode={videoSourceMode}
-                        onModeChange={handleVideoSourceModeChange}
+        <>
+            <IntroModal />
+            <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
+                <VStack gap={6} p={1} align="stretch">
+                    <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
+                        <Heading size="md" mb={4}>{t.dashboard.videoSourceTitle}</Heading>
+                        <VideoSourceSelector
+                            value={videoSource}
+                            onChange={handleVideoSourceChange}
+                            mode={videoSourceMode}
+                            onModeChange={handleVideoSourceModeChange}
+                        />
+                        {isYoutubeSelected && (
+                            <Text
+                                mt={4}
+                                fontSize="sm"
+                                color="orange.700"
+                                bg="orange.50"
+                                borderWidth="1px"
+                                borderColor="orange.100"
+                                rounded="md"
+                                p={3}
+                            >
+                                {t.dashboard.youtubeScreenshotNotice}
+                            </Text>
+                        )}
+                    </Box>
+
+                    <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
+                        <Heading size="md" mb={4}>{t.dashboard.promptSettingsTitle}</Heading>
+                        <PromptSettings
+                            config={promptConfig}
+                            onChange={handlePromptConfigChange}
+                            isYoutube={isYoutubeSelected}
+                        />
+                    </Box>
+
+                    <ActionPanel
+                        onGenerate={handleGenerate}
+                        isProcessing={isProcessing}
+                        disabled={!videoSource}
                     />
-                    {isYoutubeSelected && (
-                        <Text
-                            mt={4}
-                            fontSize="sm"
-                            color="orange.700"
-                            bg="orange.50"
-                            borderWidth="1px"
-                            borderColor="orange.100"
-                            rounded="md"
-                            p={3}
-                        >
-                            {t.dashboard.youtubeScreenshotNotice}
-                        </Text>
-                    )}
-                </Box>
+                </VStack>
 
-                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
-                    <Heading size="md" mb={4}>{t.dashboard.promptSettingsTitle}</Heading>
-                    <PromptSettings
-                        config={promptConfig}
-                        onChange={handlePromptConfigChange}
-                        isYoutube={isYoutubeSelected}
-                    />
-                </Box>
+                <VStack gap={6} p={1} align="stretch">
+                    <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
+                        <Heading size="md" mb={4}>{t.dashboard.statusTitle}</Heading>
+                        <ProgressSection progress={progress} statusMessage={statusMessage} />
+                    </Box>
 
-                <ActionPanel
-                    onGenerate={handleGenerate}
-                    isProcessing={isProcessing}
-                    disabled={!videoSource}
-                />
-            </VStack>
+                    <LogSection logs={logs} onClear={clearLogs} />
 
-            <VStack gap={6} p={1} align="stretch">
-                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px">
-                    <Heading size="md" mb={4}>{t.dashboard.statusTitle}</Heading>
-                    <ProgressSection progress={progress} statusMessage={statusMessage} />
-                </Box>
-
-                <LogSection logs={logs} onClear={clearLogs} />
-
-                <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px" flex="1" minH="300px">
-                    <ResultPreview content={resultMarkdown} onDownload={handleDownload} />
-                </Box>
-            </VStack>
-        </Grid>
+                    <Box bg="white" p={6} rounded="xl" shadow="sm" borderWidth="1px" flex="1" minH="300px">
+                        <ResultPreview content={resultMarkdown} onDownload={handleDownload} />
+                    </Box>
+                </VStack>
+            </Grid>
+        </>
     );
 };
