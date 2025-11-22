@@ -47,6 +47,7 @@ export interface DashboardState {
         prompt: string;
         language: 'ja' | 'en';
         extractScreenshots: boolean;
+        cropScreenshots?: boolean;
         screenshotFrequency: 'minimal' | 'moderate' | 'detailed';
     };
 }

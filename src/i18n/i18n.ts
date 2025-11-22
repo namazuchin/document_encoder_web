@@ -40,6 +40,7 @@ export interface Translations {
         language: string;
         screenshotSettings: string;
         embedScreenshots: string;
+        cropScreenshots: string;
         screenshots: string;
         enable: string;
         frequency: string;
@@ -142,6 +143,7 @@ export const translations: Record<Language, Translations> = {
             language: '言語',
             screenshotSettings: 'スクリーンショット埋め込み設定',
             embedScreenshots: 'スクリーンショットを埋め込む',
+            cropScreenshots: 'クロップ処理を行う [β] (Gemini Proモデルの使用を推奨)',
             screenshots: 'スクリーンショット',
             enable: '有効化',
             frequency: '頻度',
@@ -242,6 +244,7 @@ export const translations: Record<Language, Translations> = {
             language: 'Language',
             screenshotSettings: 'Screenshot Settings',
             embedScreenshots: 'Embed screenshots',
+            cropScreenshots: 'Crop Processing [β] (Gemini Pro recommended)',
             screenshots: 'Screenshots',
             enable: 'Enable',
             frequency: 'Frequency',
