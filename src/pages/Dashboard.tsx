@@ -11,7 +11,7 @@ import { VideoProcessor } from '../services/video';
 import { GeminiClient } from '../services/gemini';
 import { ArchiveService } from '../services/archive';
 import { IndexedDBService } from '../services/indexedDB';
-import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, generateScreenshotFilename } from '../services/screenshot';
+import { parseScreenshotPlaceholders, replaceScreenshotsInMarkdown, buildScreenshotPromptInstruction, generateScreenshotFilename, removeFileExtension, sanitizeFilename } from '../services/screenshot';
 
 import { IntroModal } from '../components/IntroModal';
 
@@ -399,17 +399,16 @@ ${intermediateDocs.join('\n\n---\n\n')}
                 // Use first file name or a generic name if multiple
                 if (videoSource.files.length === 1) {
                     const fileName = videoSource.files[0].name;
-                    const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-                    zipFileName = `${nameWithoutExt}.zip`;
+                    const nameWithoutExt = removeFileExtension(fileName);
+                    const sanitized = sanitizeFilename(nameWithoutExt);
+                    zipFileName = `${sanitized}.zip`;
                 } else {
                     zipFileName = `multi_video_documents_${new Date().toISOString().slice(0, 10)}.zip`;
                 }
             } else if (videoSource.type === 'youtube' && videoSource.youtubeTitle) {
                 // YouTubeタイトルを使用（ファイル名に使えない文字を置換）
-                const sanitizedTitle = videoSource.youtubeTitle
-                    .replace(/[/\\:*?"<>|]/g, '_')
-                    .trim();
-                zipFileName = `${sanitizedTitle}.zip`;
+                const sanitized = sanitizeFilename(videoSource.youtubeTitle.trim());
+                zipFileName = `${sanitized}.zip`;
             }
         }
 
