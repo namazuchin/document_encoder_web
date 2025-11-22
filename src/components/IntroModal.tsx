@@ -99,7 +99,14 @@ export const IntroModal: React.FC = () => {
     const step = steps[currentStep];
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => setIsOpen(e.open)} size="xl" placement="center">
+        <Dialog.Root
+            open={isOpen}
+            onOpenChange={(e) => setIsOpen(e.open)}
+            size="xl"
+            placement="center"
+            scrollBehavior="inside"
+            initialFocusEl={() => null}
+        >
             <Dialog.Backdrop backdropFilter="blur(4px)" />
             <Dialog.Positioner>
                 <Dialog.Content borderRadius="xl" overflow="hidden">

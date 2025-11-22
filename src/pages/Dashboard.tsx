@@ -37,6 +37,11 @@ export const Dashboard: React.FC = () => {
     const [extractedImages, setExtractedImages] = useState<{ blob: Blob; name: string }[]>([]);
     const [loadedFiles, setLoadedFiles] = useState<File[]>([]);
 
+    // Ensure scroll position is at top on mount
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     // Load files from IndexedDB on mount
     useEffect(() => {
         const loadFilesFromIndexedDB = async () => {
