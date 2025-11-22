@@ -16,8 +16,8 @@ export const Settings: React.FC = () => {
         setHasChanges(true);
     };
 
-    const handleSave = () => {
-        updateSettings(tempSettings);
+    const handleSave = async () => {
+        await updateSettings(tempSettings);
         setHasChanges(false);
     };
 
@@ -26,8 +26,8 @@ export const Settings: React.FC = () => {
         setHasChanges(false);
     };
 
-    const handleExport = () => {
-        const configJson = StorageService.exportConfiguration();
+    const handleExport = async () => {
+        const configJson = await StorageService.exportConfiguration();
         const blob = new Blob([configJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -50,16 +50,16 @@ export const Settings: React.FC = () => {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const content = e.target?.result as string;
-            const result = StorageService.importConfiguration(content);
+            const result = await StorageService.importConfiguration(content);
 
             if (result.success) {
                 // Reload settings and presets from storage
-                const newSettings = StorageService.getSettings();
+                const newSettings = await StorageService.getSettings();
                 const newPresets = StorageService.getPresets();
                 setTempSettings(newSettings);
-                updateSettings(newSettings);
+                await updateSettings(newSettings);
                 updatePresets(newPresets);
                 setHasChanges(false);
 
@@ -74,7 +74,7 @@ export const Settings: React.FC = () => {
         event.target.value = '';
     };
 
-    const handleClearStorage = () => {
+    const handleClearStorage = async () => {
         if (!window.confirm(t.settings.clearStorageConfirm)) {
             return;
         }
@@ -85,10 +85,10 @@ export const Settings: React.FC = () => {
         localStorage.clear();
 
         // Reset to default settings
-        const defaultSettings = StorageService.getSettings();
+        const defaultSettings = await StorageService.getSettings();
         const defaultPresets = StorageService.getPresets();
         setTempSettings(defaultSettings);
-        updateSettings(defaultSettings);
+        await updateSettings(defaultSettings);
         updatePresets(defaultPresets);
         setHasChanges(false);
 
