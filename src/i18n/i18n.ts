@@ -304,3 +304,28 @@ export const translations: Record<Language, Translations> = {
 export function useTranslation(language: Language) {
     return translations[language];
 }
+
+/**
+ * Formats file size in bytes to GB for display
+ * @param sizeInBytes - File size in bytes
+ * @returns Formatted string (e.g., "1GB", "2GB")
+ */
+export function formatMaxFileSize(sizeInBytes: number): string {
+    const sizeInGB = sizeInBytes / (1024 * 1024 * 1024);
+    return `${sizeInGB}GB`;
+}
+
+/**
+ * Gets the upload hint text with dynamic file size
+ * @param language - Current language
+ * @param maxFileSizeBytes - Maximum file size in bytes
+ * @returns Formatted upload hint text
+ */
+export function getUploadHint(language: Language, maxFileSizeBytes: number): string {
+    const sizeStr = formatMaxFileSize(maxFileSizeBytes);
+    if (language === 'ja') {
+        return `MP4, MOV, WebM (各ファイル最大${sizeStr})`;
+    } else {
+        return `MP4, MOV, WebM up to ${sizeStr} each`;
+    }
+}
