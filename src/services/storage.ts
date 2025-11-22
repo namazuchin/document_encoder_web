@@ -1,6 +1,7 @@
 import { type AppSettings, type PromptPreset, GEMINI_MODELS } from '../types';
 
 const STORAGE_KEY = 'doc_encoder_settings';
+const DEFAULT_PRESETS_INITIALIZED_KEY = 'doc_encoder_default_presets_initialized';
 
 const DEFAULT_SETTINGS: AppSettings = {
     apiKey: '',
@@ -8,6 +9,81 @@ const DEFAULT_SETTINGS: AppSettings = {
     maxFileSize: 1024 * 1024 * 1024, // 1GB
     language: 'ja',
 };
+
+const DEFAULT_PRESETS: PromptPreset[] = [
+    {
+        id: 'default-summary',
+        name: '動画要約 / Video Summary',
+        content: `この動画の内容を以下の形式で要約してください：
+
+## 概要
+（動画の全体的な内容を2-3文で説明）
+
+## 主なポイント
+- （重要なポイント1）
+- （重要なポイント2）
+- （重要なポイント3）
+
+## 詳細
+（各セクションごとに詳しく説明）`,
+        isDefault: true
+    },
+    {
+        id: 'default-technical-doc',
+        name: '技術文書化 / Technical Documentation',
+        content: `この技術チュートリアル/解説動画を詳細なドキュメントに変換してください：
+
+## 前提条件
+（必要な知識や環境）
+
+## 手順
+1. （ステップ1の詳細説明）
+2. （ステップ2の詳細説明）
+...
+
+## コード例
+（該当する場合、コードスニペットを含める）
+
+## トラブルシューティング
+（一般的な問題と解決策）`,
+        isDefault: true
+    },
+    {
+        id: 'default-meeting-minutes',
+        name: '会議議事録 / Meeting Minutes',
+        content: `この会議動画から議事録を作成してください：
+
+## 会議情報
+- 日時: （動画から推測または省略）
+- 参加者: （特定できる場合）
+
+## 議題
+（話し合われた主なトピック）
+
+## 議論内容
+（各議題について話し合われた内容）
+
+## 決定事項
+- （決定1）
+- （決定2）
+
+## アクションアイテム
+- （担当者）: （タスク）`,
+        isDefault: true
+    },
+    {
+        id: 'default-transcript',
+        name: '字幕抽出 / Transcript Extraction',
+        content: `この動画の音声を文字起こししてください：
+
+## 文字起こし
+
+（話された内容を時系列順に、話者が分かる場合は話者名とともに記録してください）
+
+話者名（または時刻）: テキスト内容`,
+        isDefault: true
+    }
+];
 
 export const StorageService = {
     getSettings(): AppSettings {
@@ -30,12 +106,25 @@ export const StorageService = {
 
     getPresets(): PromptPreset[] {
         const stored = localStorage.getItem(STORAGE_KEY + '_presets');
-        if (!stored) return [];
-        try {
-            return JSON.parse(stored);
-        } catch {
-            return [];
+        const initialized = localStorage.getItem(DEFAULT_PRESETS_INITIALIZED_KEY);
+
+        let presets: PromptPreset[] = [];
+        if (stored) {
+            try {
+                presets = JSON.parse(stored);
+            } catch {
+                presets = [];
+            }
         }
+
+        // 初回ロード時またはプリセットが空の場合、デフォルトプリセットを追加
+        if (!initialized && presets.length === 0) {
+            presets = [...DEFAULT_PRESETS];
+            this.savePresets(presets);
+            localStorage.setItem(DEFAULT_PRESETS_INITIALIZED_KEY, 'true');
+        }
+
+        return presets;
     },
 
     savePresets(presets: PromptPreset[]) {

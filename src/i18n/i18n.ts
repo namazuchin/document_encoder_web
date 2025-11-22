@@ -52,7 +52,9 @@ export interface Translations {
         noResult: string;
         japanese: string;
         english: string;
-            youtubeScreenshotNotice: string;
+        youtubeScreenshotNotice: string;
+        systemPromptLabel: string;
+        systemPromptHint: string;
     };
     settings: {
         title: string;
@@ -143,6 +145,8 @@ export const translations: Record<Language, Translations> = {
             japanese: '日本語',
             english: '英語',
             youtubeScreenshotNotice: 'YouTubeを選択した場合、スクリーンショットの埋め込みはできません。',
+            systemPromptLabel: 'システムプロンプト',
+            systemPromptHint: 'このプロンプトはGeminiに自動的に送信されます',
         },
         settings: {
             title: '設定',
@@ -150,8 +154,8 @@ export const translations: Record<Language, Translations> = {
             apiKeyPlaceholder: 'Gemini APIキーを入力してください',
             apiKeyHint: 'APIキーはブラウザのLocalStorageにローカル保存されます。',
             modelLabel: 'モデル',
-            maxFileSizeLabel: '最大ファイルサイズ (バイト)',
-            maxFileSizeHint: 'デフォルト: 1073741824 (1GB)。大きなファイルはブラウザをクラッシュさせる可能性があります。',
+            maxFileSizeLabel: '最大ファイルサイズ (GB)',
+            maxFileSizeHint: 'デフォルト: 1 GB。大きなファイルはブラウザをクラッシュさせる可能性があります。',
             languageLabel: '表示言語',
             configManagement: '設定管理',
             exportConfig: '設定をエクスポート',
@@ -231,6 +235,8 @@ export const translations: Record<Language, Translations> = {
             japanese: 'Japanese',
             english: 'English',
             youtubeScreenshotNotice: 'Screenshot embedding is unavailable when using a YouTube source.',
+            systemPromptLabel: 'System Prompt',
+            systemPromptHint: 'This prompt will be automatically sent to Gemini',
         },
         settings: {
             title: 'Settings',
@@ -238,8 +244,8 @@ export const translations: Record<Language, Translations> = {
             apiKeyPlaceholder: 'Enter your Gemini API Key',
             apiKeyHint: 'Your API key is stored locally in your browser\'s LocalStorage.',
             modelLabel: 'Model',
-            maxFileSizeLabel: 'Max File Size (Bytes)',
-            maxFileSizeHint: 'Default: 1073741824 (1GB). Large files may crash the browser.',
+            maxFileSizeLabel: 'Max File Size (GB)',
+            maxFileSizeHint: 'Default: 1 GB. Large files may crash the browser.',
             languageLabel: 'Display Language',
             configManagement: 'Configuration Management',
             exportConfig: 'Export Configuration',
