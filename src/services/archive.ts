@@ -3,12 +3,13 @@ import JSZip from 'jszip';
 export const ArchiveService = {
     async createZip(
         markdown: string,
-        images: { blob: Blob; name: string }[]
+        images: { blob: Blob; name: string }[],
+        markdownFileName: string = "document.md"
     ): Promise<Blob> {
         const zip = new JSZip();
 
         // Add markdown file
-        zip.file("document.md", markdown);
+        zip.file(markdownFileName, markdown);
 
         // Add images folder
         const imgFolder = zip.folder("images");

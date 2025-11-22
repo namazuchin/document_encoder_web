@@ -21,4 +21,24 @@ describe('ArchiveService', () => {
         const imgContent = await zip.folder('images')?.file('test.png')?.async('string');
         expect(imgContent).toBe('fake-image-data');
     });
+
+    it('should create a zip file with custom markdown filename', async () => {
+        const markdown = '# Custom Document';
+        const images = [
+            { blob: new Blob(['image-data'], { type: 'image/png' }), name: 'img.png' }
+        ];
+        const customFileName = 'my_video.md';
+
+        const zipBlob = await ArchiveService.createZip(markdown, images, customFileName);
+        expect(zipBlob).toBeInstanceOf(Blob);
+
+        // Verify zip content
+        const zip = await JSZip.loadAsync(zipBlob);
+
+        const mdContent = await zip.file(customFileName)?.async('string');
+        expect(mdContent).toBe(markdown);
+
+        const imgContent = await zip.folder('images')?.file('img.png')?.async('string');
+        expect(imgContent).toBe('image-data');
+    });
 });

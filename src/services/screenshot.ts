@@ -4,30 +4,30 @@
  */
 
 export interface ScreenshotPlaceholder {
-    /** プレースホルダー全文 (例: "[Screenshot: 01:23s]" または "[Screenshot: 01:23s | 10,20,300,200]") */
+    /** プレースホルダー全文 (例: "[Screenshot: 01:23s]" または "[Screenshot: 01:23s | 100,200,300,400]") */
     placeholder: string;
     /** タイムスタンプ文字列 (例: "01:23" または "83.5") */
     timestampStr: string;
     /** 秒数に変換されたタイムスタンプ */
     seconds: number;
-    /** クロップ情報 (x, y, w, h) */
+    /** クロップ情報 (ymin, xmin, ymax, xmax) - 0-1000 scale */
     crop?: {
-        x: number;
-        y: number;
-        w: number;
-        h: number;
+        ymin: number;
+        xmin: number;
+        ymax: number;
+        xmax: number;
     };
 }
 
 /**
- * Markdown内の [Screenshot: XX:XXs] または [Screenshot: XX:XXs | x,y,w,h] 形式のプレースホルダーを解析
+ * Markdown内の [Screenshot: XX:XXs] または [Screenshot: XX:XXs | ymin,xmin,ymax,xmax] 形式のプレースホルダーを解析
  * @param markdown 解析対象のMarkdownテキスト
  * @returns 検出されたプレースホルダー情報の配列
  */
 export function parseScreenshotPlaceholders(markdown: string): ScreenshotPlaceholder[] {
-    // [Screenshot: XX:XX(s)] または [Screenshot: XX.XX(s)] または [Screenshot: XX:XXs | x,y,w,h] の形式に対応
+    // [Screenshot: XX:XX(s)] または [Screenshot: XX.XX(s)] または [Screenshot: XX:XXs | ymin,xmin,ymax,xmax] の形式に対応
     // Group 1: Timestamp
-    // Group 2: Optional coordinates (e.g., "10,20,300,200")
+    // Group 2: Optional coordinates (e.g., "100,200,300,400")
     const regex = /\[Screenshot:\s*(\d{1,2}:\d{2}(?:\.\d+)?|\d+(?:\.\d+)?)\s*s?(?:\s*\|\s*(\d+,\d+,\d+,\d+))?\]/gi;
     const placeholders: ScreenshotPlaceholder[] = [];
 
@@ -38,11 +38,11 @@ export function parseScreenshotPlaceholders(markdown: string): ScreenshotPlaceho
         const coordsStr = match[2];
         const seconds = parseTimestampToSeconds(timestampStr);
 
-        let crop: { x: number; y: number; w: number; h: number } | undefined;
+        let crop: { ymin: number; xmin: number; ymax: number; xmax: number } | undefined;
         if (coordsStr) {
-            const [x, y, w, h] = coordsStr.split(',').map(Number);
-            if (!isNaN(x) && !isNaN(y) && !isNaN(w) && !isNaN(h)) {
-                crop = { x, y, w, h };
+            const [ymin, xmin, ymax, xmax] = coordsStr.split(',').map(Number);
+            if (!isNaN(ymin) && !isNaN(xmin) && !isNaN(ymax) && !isNaN(xmax)) {
+                crop = { ymin, xmin, ymax, xmax };
             }
         }
 
@@ -198,11 +198,12 @@ export function buildScreenshotPromptInstruction(
     let formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs] where XX:XX is the timestamp in MM:SS format.`;
 
     if (cropEnabled) {
-        formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs | x,y,w,h].
+        formatInstruction = `please include screenshot references using this exact format: [Screenshot: XX:XXs | ymin,xmin,ymax,xmax].
         - XX:XX is the timestamp in MM:SS format.
-        - x,y,w,h are the coordinates and dimensions of the region to crop (in pixels, assuming 1920x1080 resolution if unknown, or relative to the visual context).
+        - ymin,xmin,ymax,xmax are the bounding box coordinates in 0-1000 scale (relative to the video frame).
+        - ymin is top, xmin is left, ymax is bottom, xmax is right.
         - If you want to capture the whole screen, omit the coordinates: [Screenshot: XX:XXs].
-        - Example: [Screenshot: 01:23s | 100,200,500,300] to crop a specific region.`;
+        - Example: [Screenshot: 01:23s | 100,200,500,600] to crop a specific region.`;
     }
 
     return `${baseInstruction}${config.what}, ${formatInstruction} ${config.usage}`;
