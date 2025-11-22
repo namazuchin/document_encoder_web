@@ -128,7 +128,7 @@ export const translations: Record<Language, Translations> = {
             localFileTab: 'ローカルファイル',
             youtubeTab: 'YouTube',
             uploadPrompt: 'クリックしてアップロード、またはドラッグ&ドロップ (複数選択可)',
-            uploadHint: 'MP4, MOV, WebM (各ファイル最大1GB)',
+            uploadHint: 'MP4, MOV, WebM (各ファイル最大{size})',
             youtubeUrl: 'YouTube URL',
             videoTitle: '動画タイトル',
             setVideo: '動画を設定',
@@ -227,7 +227,7 @@ export const translations: Record<Language, Translations> = {
             localFileTab: 'Local File',
             youtubeTab: 'YouTube',
             uploadPrompt: 'Click to upload or drag and drop (multiple files supported)',
-            uploadHint: 'MP4, MOV, WebM up to 1GB each',
+            uploadHint: 'MP4, MOV, WebM up to {size} each',
             youtubeUrl: 'YouTube URL',
             videoTitle: 'Video Title',
             setVideo: 'Set Video',
@@ -323,9 +323,6 @@ export function formatMaxFileSize(sizeInBytes: number): string {
  */
 export function getUploadHint(language: Language, maxFileSizeBytes: number): string {
     const sizeStr = formatMaxFileSize(maxFileSizeBytes);
-    if (language === 'ja') {
-        return `MP4, MOV, WebM (各ファイル最大${sizeStr})`;
-    } else {
-        return `MP4, MOV, WebM up to ${sizeStr} each`;
-    }
+    const template = translations[language].dashboard.uploadHint;
+    return template.replace('{size}', sizeStr);
 }
